@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "chart.js": "^3.3.2",
     "primeflex": "^2.0.0",
     "primeicons": "^4.1.0",
     "primereact": "^6.4.1",
@@ -11,6 +12,7 @@
     "react-router": "^5.2.0",
     "react-scripts": "3.2.0",
     "react-transition-group": "^4.4.2",
+    "use-persisted-state": "^0.3.3",
     "web3": "1.2.2"
   },
   "scripts": {
@@ -18,29 +20,6 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-  },
-  "xo": {
-    "extends": "xo-react",
-    "webpack": true,
-    "globals": [
-      "test",
-      "expect",
-      "document",
-      "window",
-      "window.ethereum",
-      "ethereum"
-    ],
-    "rules": {
-      "react/prop-types": "off",
-      "react/jsx-key": "off",
-      "import/no-unassigned-import": "off",
-      "unicorn/filename-case": [
-        "error",
-        {
-          "case": "pascalCase"
-        }
-      ]
-    }
   },
   "browserslist": {
     "production": [
@@ -53,9 +32,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "eslint-config-xo-react": "latest",
-    "xo": "latest"
   }
 }
