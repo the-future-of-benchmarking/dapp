@@ -1,3 +1,4 @@
+import { BenchmarkClient } from 'BenchmarkClient';
 import createPersistedState from 'use-persisted-state';
 const useContractState = createPersistedState('contracts');
 

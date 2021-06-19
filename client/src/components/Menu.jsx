@@ -7,12 +7,10 @@ export class Menu extends Component{
     
     // See http://4youngpadawans.com/primereact-menubar-with-react-router/
     navigateToPage = (path) => {
-		console.log('Navigate to path ' + path);
 		this.props.history.push(path);
 	}
 
     render(){
-        console.log(this.props)
         const items = [
             {
                 label: 'Home', icon: 'pi pi-fw pi-home', command:()=>{ this.navigateToPage('/') }, 

@@ -1,2 +1,3 @@
 #!/bin/bash
-cp -r build/contracts ../client/src/contracts
+npx truffle compile
+cp -r build/contracts ../client/src

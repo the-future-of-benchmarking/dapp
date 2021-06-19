@@ -1,5 +1,6 @@
 import React, { Component } from "react";
-// import SimpleStorageContract from "./contracts/SimpleStorage.json";
+// @ts-ignore
+import BenchmarkContract from "./contracts/BenchMark.json";
 import getWeb3 from "./getWeb3";
 
 import "./App.css";
@@ -8,6 +9,7 @@ import  Menu from "components/Menu";
 import {createBrowserHistory} from 'history';
 import { Route, Router, Switch } from "react-router";
 import { ParticipateScreen } from "components/BenchmarkParticipateScreen";
+import { BenchmarkClient } from "BenchmarkClient";
 
 let History = createBrowserHistory();
 
@@ -57,13 +59,10 @@ class App extends Component {
 
       ethereum.on('chainChanged', this.handleChainChanged);
       ethereum.on('accountsChanged', this.handleAccountsChanged);
-      /*
-      const deployedNetwork = SimpleStorageContract.networks[networkId];
-      const instance = new web3.eth.Contract(
-        SimpleStorageContract.abi,
-        deployedNetwork && deployedNetwork.address,
-      );
-
+      
+      //const deployedNetwork = SimpleStorageContract.networks[networkId];
+      const instance = new BenchmarkClient("0x26912E00C4698e3F1E391B0806473e6F83033507", web3)
+/*
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
       this.setState({ web3, accounts, contract: instance }, this.runExample);*/
