@@ -1,0 +1,3 @@
+[submodule "client/prb-math"]
+	path = client/prb-math
+	url = https://github.com/the-future-of-benchmarking/prb-math.git

@@ -1,6 +1,6 @@
 import { Card } from "primereact/card";
 import React, { Component, useState } from "react";
-
+import {maxSafeValue} from "../../numberUtil.js"
 import { InputNumber } from 'primereact/inputnumber';
 import { BenchmarkResult } from "./BenchmarkResult";
 import { useContracts } from "./contracts-hook";
@@ -16,6 +16,7 @@ export const BenchmarkParticipation = ({
 
     const currentContract = getContract(smartContractAddress);
 
+    
     console.log(currentContract)
 
     return (<Card title="Benchmark Teilnahme" className="p-mb-2">
@@ -26,7 +27,7 @@ export const BenchmarkParticipation = ({
 
                     <Button label="Contribute" onClick={() => typeof currentContract.entry === "number" ? "" : setEntry(smartContractAddress, entryInput)} disabled={typeof currentContract.entry === "number"} />
                     <span className="p-float-label">
-                        <InputNumber id="input" value={typeof currentContract.entry === "number" ? currentContract.entry : entryInput} onChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={2} maxFractionDigits={5} required={true} min={currentContract.min} max={currentContract.max} suffix={currentContract.unit ? " " + currentContract.unit : ""} disabled={typeof currentContract.entry === "number"} />
+                        <InputNumber id="input" value={typeof currentContract.entry === "number" ? currentContract.entry : entryInput} onChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={0} maxFractionDigits={5} required={true} min={currentContract.min} max={currentContract.max} suffix={currentContract.unit ? " " + currentContract.unit : ""} disabled={typeof currentContract.entry === "number"} />
                         <label htmlFor="input">Benchmark Input</label>
                     </span>
                     </div>
