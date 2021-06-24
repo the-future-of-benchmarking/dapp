@@ -17,7 +17,7 @@ const getWeb3 = () =>
 
         let accounts = await window.ethereum.request({ method: 'eth_accounts' })
         if(accounts.length === 0){
-          alert("Select an account")
+          reject("Select an account")
         }
         
 
@@ -27,14 +27,13 @@ const getWeb3 = () =>
           // Accounts now exposed
           resolve({web3, ethereum: window.ethereum, accounts: reqAccounts});
         } catch (error) {
-          alert("Zugriff auf MetaMask fehlgeschlagen, bitte Seite neu laden")
-          reject(error);
+          reject("Zugriff auf MetaMask fehlgeschlagen, bitte Seite neu laden")
           
         }
       }
       // Fallback to localhost; use dev console port by default...
       else {
-        alert("Zugriff auf geeignete Ethereum Erweiterung (wie z.B. MetaMask) fehlgeschlagen. Bitte installieren sie MetaMask")
+        reject("Zugriff auf geeignete Ethereum Erweiterung (wie z.B. MetaMask) fehlgeschlagen. Bitte installieren sie MetaMask")
       }
     });
   });

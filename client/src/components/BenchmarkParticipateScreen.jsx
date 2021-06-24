@@ -1,11 +1,10 @@
 import { Card } from "primereact/card";
 import React, { Component } from "react";
 import { Chip } from 'primereact/chip';
+import { Toast } from 'primereact/toast';
 
-import { InputNumber } from 'primereact/inputnumber';
 import { SavedContracts } from "./participate/SavedContracts";
 import { BenchmarkInformations } from "./participate/BenchmarkInformations";
-import { BenchmarkResult } from "./participate/BenchmarkResult";
 import { BenchmarkParticipation } from "./participate/BenchmarkParticipation";
 import { BenchmarkClient } from "BenchmarkClient";
 
@@ -19,35 +18,55 @@ export class ParticipateScreen extends Component {
         }
 
         this.loadBenchmark = this.loadBenchmark.bind(this)
+        this.toast = React.createRef();
+        this.validateAddress = this.validateAddress.bind(this)
+    }
+
+    validateAddress(address, raiseError=true){
+        if(!this.props.web3.utils.isAddress(address)){
+            if(raiseError){
+                this.showError("Adresse ist nicht valid!")
+            }
+            return false;
+        }else{
+            return true;
+        }
     }
 
     loadBenchmark(address){
-        if(!this.props.web3.utils.isAddress(address)){
-            alert("Not a valid adress!")
-        }else{
+        if(this.validateAddress(address)){
             this.setState({
                 smartContractAddress: address,
                 smartContractInterface: new BenchmarkClient(address, this.props.web3)
             })
         }
-        
     }
+
+    showError = (message) => {
+        this.toast.current.show({severity:'error', summary: 'Fehler', detail:message, life: 5000});
+    }
+
+    showInfo = (message) => {
+        this.toast.current.show({severity:'info', summary: 'Info', detail:message, life: 5000})
+    }
+
     render() {
         return (<div className="p-grid">
             <div className="p-col-5">
+            <Toast ref={this.toast} />
 
                 <Card title="Aktuelle Adresse" className="p-mb-4">
                     <Chip template={this.props.currentAccount} />
                 </Card>
 
-                <SavedContracts loadBenchmark={this.loadBenchmark} smartContractAddress={this.state.smartContractAddress} />
+                <SavedContracts loadBenchmark={this.loadBenchmark} smartContractAddress={this.state.smartContractAddress} showError={this.showError} web3={this.props.web3} />
 
 
-                {this.state.smartContractAddress ? <BenchmarkInformations smartContractAddress={this.state.smartContractAddress} /> :"" }
+                {this.state.smartContractAddress ? <BenchmarkInformations smartContractAddress={this.state.smartContractAddress} showError={this.showError} /> :"" }
 
             </div>
             <div className="p-col-7">
-            {this.state.smartContractAddress ? <BenchmarkParticipation smartContractAddress={this.state.smartContractAddress} /> : <></> }
+            {this.state.smartContractAddress ? <BenchmarkParticipation smartContractAddress={this.state.smartContractAddress} showError={this.showError} /> : <></> }
             </div>
 
         </div>)

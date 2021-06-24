@@ -18,19 +18,13 @@ const customizedContent = (item) => {
 };
 
 const customizedMarker = (item) => {
-
-
-        
-
         return (
         <span className="custom-marker p-shadow-2" style={{ backgroundColor: item.color }}>
             <i className={item.icon}></i>
         </span>
     );
-
-
-    
 };
+
 export function TimeLine(){
-  return(<Timeline value={events} align="alternate" content={customizedContent} marker={customizedMarker}/>)
+  return(<Timeline value={events} align="alternate" content={customizedContent} marker={customizedMarker} className="p-p-0"/>)
 }

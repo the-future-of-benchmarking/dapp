@@ -32,6 +32,10 @@ contract BenchMark {
 
     Benchmark public benchmark;
 
+    event AggregateReady(bytes32 indexed benchmarkName, uint256 entryCount);
+
+    
+
     /// Create a new ballot to choose one of `proposalNames`.
     constructor(
         bytes32 benchmarkName,
@@ -125,6 +129,12 @@ contract BenchMark {
         }
     }
 
+    function emitAdvertisement() internal {
+        if(benchmark.entries >= 3){
+            emit AggregateReady(benchmark.name, benchmark.entries);
+        }
+    }
+
     function participate(uint256 contribution) public {
         Benchmarkee storage sender = Benchmarkees[msg.sender];
         require(!sender.participated, "Already participated.");
@@ -146,10 +156,14 @@ contract BenchMark {
         benchmark.entries += 1;
         sender.contribution = contribution.fromUint();
 
+        emitAdvertisement();
+
         if(best == 0 || contribution > best){
             best = contribution;
         }
     }
+
+    
 
     function average() external view returns (uint256 average_) {
         // https://ethereum.stackexchange.com/a/52564
@@ -159,6 +173,8 @@ contract BenchMark {
         require(sender.participated, "Not eligible, not participated");
         require(benchmark.entries >= 3, "Not enough people have participated");
 
+        emitAdvertisement();
+
         average_ = benchmark.sum.div(benchmark.entries.fromUint());
     }
 
@@ -166,6 +182,9 @@ contract BenchMark {
         Benchmarkee storage sender = Benchmarkees[msg.sender];
         require(sender.participated, "Not eligible, not participated");
         require(benchmark.entries >= 3, "Not enough people have participated");
+
+        emitAdvertisement();
+
         rating_ = getStars(sender.contribution, best, true);
     }
 
@@ -174,6 +193,9 @@ contract BenchMark {
         
         require(sender.participated, "Not eligible, not participated");
         require(benchmark.entries >= 3, "Not enough people have participated");
+
+        emitAdvertisement();
+
         rating_ = getStars(sender.contribution, this.average(), false);
     }
 }

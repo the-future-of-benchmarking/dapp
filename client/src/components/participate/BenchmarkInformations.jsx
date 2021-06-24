@@ -6,16 +6,34 @@ import { useContracts } from "./contracts-hook";
 
 
 export const BenchmarkInformations = ({
-    smartContractAddress,
+    smartContractAddress,showError
 }) => {
 
-    const { contracts, getContract } = useContracts([])
+    const { getContract,  } = useContracts([])
 
     const currentContract = getContract(smartContractAddress);
     return(
     <Card title="Benchmark Informationen" className="p-mb-4 p-mt-4">
                     <div className="p-grid">
                     {!smartContractAddress ? <div className="p-col-12">SmartContract nicht geladen, bitte oben selektieren</div>: <>
+
+                    <div className="p-col-4">
+                            <p>Smart Contract Name</p>
+                        </div>
+
+                        <div className="p-col-8">
+                            {!currentContract.name ? <p>Nicht gesetzt</p> : <p>{currentContract.name}</p>}
+                        </div>
+
+            
+
+                        <div className="p-col-4">
+                            <p>Smart Contract Beschreibung</p>
+                        </div>
+
+                        <div className="p-col-8">
+                            {!currentContract.description ? <p>Nicht gesetzt</p> :<p>{currentContract.description}</p>}
+                        </div>
 
                         <div className="p-col-4">
                             <p>Smart Contract Adresse</p>
@@ -24,6 +42,7 @@ export const BenchmarkInformations = ({
                         <div className="p-col-8">
                             {!smartContractAddress ? <p>"Nicht gesetzt"</p> : <Chip template={smartContractAddress}></Chip>}
                         </div>
+
                         <div className="p-col-4">
                             <p>
                                 Einheit

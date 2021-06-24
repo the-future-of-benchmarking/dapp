@@ -1,5 +1,3 @@
-import { BenchmarkClient } from 'BenchmarkClient';
-import { fromPrecision, maxSafeValue } from 'numberUtil';
 import createPersistedState from 'use-persisted-state';
 const useContractState = createPersistedState('contracts');
 
@@ -7,10 +5,8 @@ const useContractState = createPersistedState('contracts');
 export const useContracts = initialContracts => {
     const [contracts, setContracts] = useContractState(initialContracts);
 
-    
-
     const addContract = (address) => {
-        let entry = { address, entry: null, unit: "Mio. €", min: 2, max: 35, participants: 3, result: 20 }
+        let entry = { address, entry: null, unit: "Mio. €", min: 2, max: 35, participants: 3, result: 20, bestInClass: true, rating: 5, name: "test", description: "Testcontract um Sachen zu testen" }
         setContracts(contracts => contracts && contracts.length > 0 ? [...contracts, entry] : [entry])
     }
 
