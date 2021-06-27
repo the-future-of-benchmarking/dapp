@@ -81,9 +81,9 @@ async function main() {
     
 
     // const BenchMarkInstance = await provision("testBenchmark", 1, 50, "Mio. €");
-    const BenchMarkInstance = new web3.eth.Contract(benchmarkContract.abi,"0x86D815b0100D65F31dF66A69B3bb0C73f4eD6487")
+    const BenchMarkInstance = new web3.eth.Contract(benchmarkContract.abi,"0x50Bad9eCF0D1f20CE510F5d1cD2472d44260B0a7")
     // contribution: 
-    let nuAccounts = accounts.map((acc:any) => ({account: acc, contribution: Math.floor(Math.random() * 48)+1}))
+    let nuAccounts = accounts.map((acc:any) => ({account: acc, contribution: toPrecision((Math.random() * 48)+1)}))
     for(let {account,contribution} of nuAccounts){
         
         //let random = Math.floor(Math.random() * 48)+1;
@@ -105,8 +105,8 @@ async function main() {
         
     }
 
-    let localSum = sum.reduce((accumulator, currentValue) => accumulator + currentValue)/sum.length
-    console.log("Local Average", localSum)
+    //let localSum = fromPrecision(sum.reduce((accumulator, currentValue) => accumulator + currentValue))/sum.length
+    //console.log("Local Average", localSum)
 
     for(let {account,contribution} of nuAccounts){
         
@@ -123,7 +123,7 @@ async function main() {
 
             
 
-            console.log("Result", account, contribution, fromPrecision(average), average_rated, best)
+            console.log("Result", account, fromPrecision(contribution), fromPrecision(average), average_rated, best)
 
 
         }catch(e){

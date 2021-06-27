@@ -55,7 +55,7 @@ contract BenchMark {
             entries: 0,
             sum: zero.fromUint(),
             upper_bound: upperBound.fromUint(),
-            lower_bound: (lowerBound.fromUint()).toUint(),
+            lower_bound: lowerBound.fromUint(),
             unit: benchmarkUnit
         });
     }
@@ -150,19 +150,17 @@ contract BenchMark {
             "Value is above upper bound"
         );
 
-        uint256 internalContribution = contribution.fromUint();
-
         // If `proposal` is out of the range of the array,
         // this will throw automatically and revert all
         // changes.
-        benchmark.sum += internalContribution;
+        benchmark.sum += contribution;
         benchmark.entries += 1;
-        sender.contribution = internalContribution;
+        sender.contribution = contribution;
 
         emitAdvertisement();
 
-        if(best == 0 || internalContribution > best){
-            best = internalContribution;
+        if(contribution > best){
+            best = contribution;
         }
     }
 
@@ -177,12 +175,12 @@ contract BenchMark {
     function bestRating(uint256 contribution) public view returns (uint rating_){
         require(benchmark.entries >= 3, "Not enough people have participated");
 
-        rating_ = getStars(contribution.fromUint(), best, true);
+        rating_ = getStars(contribution, best, true);
     }
 
     function averageRating(uint256 contribution) public view returns (uint rating_){
         require(benchmark.entries >= 3, "Not enough people have participated");
 
-        rating_ = getStars(contribution.fromUint(), this.average(), false);
+        rating_ = getStars(contribution, this.average(), false);
     }
 }
