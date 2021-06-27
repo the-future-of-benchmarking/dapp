@@ -1,5 +1,6 @@
 import {MAX_UD60x18} from "../client/prb-math/helpers/constants"
 import {mbn} from "../client/prb-math/helpers/math"
+import {fromPrecision, toPrecision} from "./numberUtil"
 
 async function main() {
     const Web3 = require('web3');
@@ -19,32 +20,6 @@ async function main() {
     let accounts = await web3.eth.getAccounts();
 
 
-
- const toPrecision = (num: number) => {
-    return mbn(num).toString();
-}
-
- const fromPrecision = (numalike: string, number = true) => {
-    if(number){
-        return mbn(numalike).toNumber();
-    }else{
-        return mbn(numalike).toString();
-    }
-    
-}
-
-
-
- const isInBounds = (num: string) => {
-    const maxvalue = MAX_UD60x18
-    return mbn(0).lte(mbn(num)) && mbn(maxvalue).gte(mbn(num));
-}
-
- const maxSafeValueLength = MAX_UD60x18.length;
- 
-
- const maxSafeValue = mbn(MAX_UD60x18).toNumber();
-
     
     let executewithGas = async (method:any, from:any, call= true) => {
         let gasestimate = await method.estimateGas({from})
@@ -62,23 +37,19 @@ async function main() {
         let response = {name: null, entries: null, sum: null, upper_bound: null, lower_bound: null, unit: null}
         response.name = web3.utils.hexToUtf8(result.name)
 
-    
-        if(fromPrecision(result.sum.toString()) < maxSafeValue){
             //@ts-ignore
             response.entries = +result.entries.toString() 
                         //@ts-ignore
 
-            response.sum = fromPrecision(result.sum.toString())
+            response.sum = fromPrecision(result.sum)
                         //@ts-ignore
 
-            response.upper_bound = fromPrecision(result.upper_bound.toString()) < maxSafeValue  ? fromPrecision(result.upper_bound.toString()) : maxSafeValue
+            response.upper_bound = fromPrecision(result.upper_bound.toString()) 
                         //@ts-ignore
 
-            response.lower_bound = fromPrecision(result.lower_bound.toString()) < maxSafeValue  ? fromPrecision(result.lower_bound.toString()) : maxSafeValue
+            response.lower_bound = fromPrecision(result.lower_bound.toString())
             response.unit = web3.utils.hexToUtf8(result.unit)
-        }else{
-            throw new Error("Could not parse sum of contract " + result.name)
-        }
+        
         return response;
     }
     
@@ -109,39 +80,51 @@ async function main() {
 
     
 
-    const BenchMarkInstance = await provision("testBenchmark", 1, 50, "Mio. €");
-
-    for(let account of accounts){
+    // const BenchMarkInstance = await provision("testBenchmark", 1, 50, "Mio. €");
+    const BenchMarkInstance = new web3.eth.Contract(benchmarkContract.abi,"0x86D815b0100D65F31dF66A69B3bb0C73f4eD6487")
+    // contribution: 
+    let nuAccounts = accounts.map((acc:any) => ({account: acc, contribution: Math.floor(Math.random() * 48)+1}))
+    for(let {account,contribution} of nuAccounts){
+        
         //let random = Math.floor(Math.random() * 48)+1;
-        let random = 5;
+        let random = contribution;
         sum.push(random)
         
         try{
-            let value =  web3.utils.toHex(toPrecision(random))
+       
+            let value =  web3.utils.toHex(random)
+            //console.log(toPrecision(random), value, fromPrecision(web3.utils.hexToNumberString(value)))
             let participation = await executewithGas(BenchMarkInstance.methods.participate(value), account, false)
-            console.log(participation)
 
-            /*
-            let details = await getDetails(BenchMarkInstance)
-            console.log(details)
-            
 
-            let best = await executewithGas(BenchMarkInstance.methods.bestRating(), account);
-            let average = await executewithGas(BenchMarkInstance.methods.average(), account);
-            let average_rated = await executewithGas(BenchMarkInstance.methods.averageRating(), account);
-            
-
-            
-
-            console.log("Result", average, average_rated, best,details)
-
-            let arr = (average.words[0].toString()).split("");
-            console.log(average.words)
-            arr.splice(2, 0, '.')
-            console.log(arr)
-            let num = Number.parseFloat(arr.join(""))
+        }catch(e){
+            console.error(e)
             let localSum = sum.reduce((accumulator, currentValue) => accumulator + currentValue)/sum.length
-            console.log("Account", account, "Smart Contract Sum:", num, "Local Sum", localSum, "Values don't match", localSum != num);*/
+            console.error("ERROR", "Account", account, "Local Sum", localSum);
+        }
+        
+    }
+
+    let localSum = sum.reduce((accumulator, currentValue) => accumulator + currentValue)/sum.length
+    console.log("Local Average", localSum)
+
+    for(let {account,contribution} of nuAccounts){
+        
+        //let random = Math.floor(Math.random() * 48)+1;
+        let random = contribution;
+        sum.push(random)
+        
+        try{
+       
+            let best = await executewithGas(BenchMarkInstance.methods.bestRating(contribution), account);
+            let average = await executewithGas(BenchMarkInstance.methods.average(), account);
+            let average_rated = await executewithGas(BenchMarkInstance.methods.averageRating(contribution), account);
+            
+
+            
+
+            console.log("Result", account, contribution, fromPrecision(average), average_rated, best)
+
 
         }catch(e){
             console.error(e)

@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@ethersproject/bignumber": "^5.4.0",
     "@truffle/contract": "^4.3.18",
+    "evm-fp": "^1.1.2",
+    "mathjs": "^9.4.3",
     "prb-math": "^2.0.1",
     "web3": "^1.3.6"
   },

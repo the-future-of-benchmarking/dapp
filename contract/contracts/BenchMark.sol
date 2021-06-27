@@ -48,12 +48,14 @@ contract BenchMark {
         require(upperBound >= 0, "Value mismatch");
         require(lowerBound >= 0, "Value mismatch");
 
+        uint256 zero = 0;
+
         benchmark = Benchmark({
             name: benchmarkName,
             entries: 0,
-            sum: 0,
-            upper_bound: upperBound,
-            lower_bound: lowerBound,
+            sum: zero.fromUint(),
+            upper_bound: upperBound.fromUint(),
+            lower_bound: (lowerBound.fromUint()).toUint(),
             unit: benchmarkUnit
         });
     }
@@ -68,7 +70,7 @@ contract BenchMark {
 
     function percentage(uint256 x, uint256 y) internal view returns (uint256 result) {
         uint256 hundred = 100;
-      uint256 r = this.unsignedDiv(x, hundred.fromUint());
+      uint256 r = this.unsignedDiv(x.fromUint(), hundred.fromUint());
       result = this.unsignedMul(y, r);
     }
 
@@ -79,19 +81,18 @@ contract BenchMark {
     ) view internal returns (uint256) {
         uint256 halb = percentage(50, referenceValue);
         uint256 viertel = percentage(25, referenceValue);
-        uint256 internalValue = value.fromUint();
         uint256 dreiviertel = percentage(75, referenceValue);
 
         
 
         if (isBest) {
-            if (internalValue == referenceValue) {
+            if (value == referenceValue) {
                 return 5;
-            } else if (internalValue < referenceValue && internalValue >= dreiviertel) {
+            } else if (value < referenceValue && value >= dreiviertel) {
                 return 4;
-            } else if (internalValue < dreiviertel && internalValue >= halb) {
+            } else if (value < dreiviertel && value >= halb) {
                 return 3;
-            } else if (internalValue < halb && internalValue >= viertel) {
+            } else if (value < halb && value >= viertel) {
                 return 2;
             } else {
                 return 1;
@@ -103,25 +104,25 @@ contract BenchMark {
             uint256 plusdreiviertel = percentage(175, referenceValue);
             uint256 plushundert = percentage(200, referenceValue);
 
-            if (internalValue == referenceValue) {
+            if (value == referenceValue) {
                 return 5;
-            } else if (internalValue < referenceValue && internalValue > dreiviertel) {
+            } else if (value < referenceValue && value > dreiviertel) {
                 return 5;
-            } else if (internalValue < dreiviertel && internalValue > halb) {
+            } else if (value < dreiviertel && value > halb) {
                 return 4;
-            } else if (internalValue < halb && internalValue > viertel) {
+            } else if (value < halb && value > viertel) {
                 return 3;
-            } else if (internalValue < viertel && internalValue > minushalb) {
+            } else if (value < viertel && value > minushalb) {
                 return 2;
-            } else if (internalValue < minushalb) {
+            } else if (value < minushalb) {
                 return 1;
-            } else if (internalValue > referenceValue && internalValue < plusviertel) {
+            } else if (value > referenceValue && value < plusviertel) {
                 return 5;
-            } else if (internalValue > plusviertel && internalValue < plushalb) {
+            } else if (value > plusviertel && value < plushalb) {
                 return 4;
-            } else if (internalValue > plushalb && internalValue < plusdreiviertel) {
+            } else if (value > plushalb && value < plusdreiviertel) {
                 return 3;
-            } else if (internalValue > plusdreiviertel && internalValue < plushundert) {
+            } else if (value > plusdreiviertel && value < plushundert) {
                 return 2;
             } else {
                 return 1;
@@ -129,7 +130,7 @@ contract BenchMark {
         }
     }
 
-    function emitAdvertisement() internal {
+    function emitAdvertisement() private {
         if(benchmark.entries >= 3){
             emit AggregateReady(benchmark.name, benchmark.entries);
         }
@@ -149,53 +150,39 @@ contract BenchMark {
             "Value is above upper bound"
         );
 
+        uint256 internalContribution = contribution.fromUint();
+
         // If `proposal` is out of the range of the array,
         // this will throw automatically and revert all
         // changes.
-        benchmark.sum += contribution.fromUint();
+        benchmark.sum += internalContribution;
         benchmark.entries += 1;
-        sender.contribution = contribution.fromUint();
+        sender.contribution = internalContribution;
 
         emitAdvertisement();
 
-        if(best == 0 || contribution > best){
-            best = contribution;
+        if(best == 0 || internalContribution > best){
+            best = internalContribution;
         }
     }
 
     
 
-    function average() external view returns (uint256 average_) {
-        // https://ethereum.stackexchange.com/a/52564
-        // Use precision of five for now
-        Benchmarkee storage sender = Benchmarkees[msg.sender];
-
-        require(sender.participated, "Not eligible, not participated");
+    function average() public view returns (uint256 average_) {
         require(benchmark.entries >= 3, "Not enough people have participated");
-
-        emitAdvertisement();
 
         average_ = benchmark.sum.div(benchmark.entries.fromUint());
     }
 
-    function bestRating() external view returns (uint rating_){
-        Benchmarkee storage sender = Benchmarkees[msg.sender];
-        require(sender.participated, "Not eligible, not participated");
+    function bestRating(uint256 contribution) public view returns (uint rating_){
         require(benchmark.entries >= 3, "Not enough people have participated");
 
-        emitAdvertisement();
-
-        rating_ = getStars(sender.contribution, best, true);
+        rating_ = getStars(contribution.fromUint(), best, true);
     }
 
-    function averageRating() external view returns (uint rating_){
-        Benchmarkee storage sender = Benchmarkees[msg.sender];
-        
-        require(sender.participated, "Not eligible, not participated");
+    function averageRating(uint256 contribution) public view returns (uint rating_){
         require(benchmark.entries >= 3, "Not enough people have participated");
 
-        emitAdvertisement();
-
-        rating_ = getStars(sender.contribution, this.average(), false);
+        rating_ = getStars(contribution.fromUint(), this.average(), false);
     }
 }

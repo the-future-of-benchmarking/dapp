@@ -24,11 +24,12 @@ export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, show
         }
     }
 
+
     return (
         <Card title="Gespeicherte Smart Contracts" className="p-mb-4 p-mt-4">
             <div className="p-grid p-dir-col">
                 {contracts && contracts.filter(contract => web3.utils.isAddress(contract.address)).map(contract => (<div className="p-col" style={{ cursor: "pointer"}} key={contract.address} onClick={() => loadBenchmark(contract.address)}>
-                <Chip template={contract.address} style={{backgroundColor: (smartContractAddress === contract.address ? "#00BCD4" : ""), color: (smartContractAddress === contract.address ? "white" : "")}}  />
+                <Chip template={<>{contract.name} - {contract.address}</>} style={{backgroundColor: (smartContractAddress === contract.address ? "#00BCD4" : ""), color: (smartContractAddress === contract.address ? "white" : "")}}  />
                 </div>))}
             </div>
 
