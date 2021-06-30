@@ -10,6 +10,7 @@ import { Route, Router, Switch } from "react-router";
 import { ParticipateScreen } from "components/BenchmarkParticipateScreen";
 import { BenchmarkCreationScreen } from "components/BenchmarkCreationScreen";
 import { Toast } from 'primereact/toast';
+import { BenchmarkClient } from "BenchmarkClient";
 
 
 let History = createBrowserHistory();
@@ -21,7 +22,7 @@ class App extends Component {
 
   constructor(props) {
     super(props);
-    this.state = { storageValue: 0, web3: null, accounts: null, contract: null, currentAccount: null };
+    this.state = { storageValue: 0, web3: null, accounts: null, contract: null, currentAccount: null, client:null };
 
     this.handleAccountsChanged = this.handleAccountsChanged.bind(this);
     this.handleChainChanged = this.handleChainChanged.bind(this)
@@ -58,7 +59,7 @@ class App extends Component {
       const networkId = await web3.eth.net.getId();
       console.log(networkId)
 
-      this.setState({ web3, accounts, currentAccount: accounts[0], networkId })
+      this.setState({ web3, accounts, currentAccount: accounts[0], networkId, client:  new BenchmarkClient(accounts[0], web3)})
 
       ethereum.on('chainChanged', this.handleChainChanged);
       ethereum.on('accountsChanged', this.handleAccountsChanged);
@@ -88,18 +89,6 @@ class App extends Component {
     }
   };
 
-  runExample = async () => {
-    const { accounts, contract } = this.state;
-
-    // Stores a given value, 5 by default.
-    await contract.methods.set(5).send({ from: accounts[0] });
-
-    // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call();
-
-    // Update state with the result.
-    this.setState({ storageValue: response });
-  };
 
   showError = (message) => {
     this.toast.current.show({ severity: 'error', summary: 'Fehler', detail: message, life: 5000 });
@@ -124,10 +113,10 @@ class App extends Component {
             <Menu />
             <Switch>
               <Route path="/create">
-                <BenchmarkCreationScreen web3={this.state.web3} currentAccount={this.state.currentAccount} />
+                <BenchmarkCreationScreen web3={this.state.web3} currentAccount={this.state.currentAccount} client={this.state.client} />
               </Route>
               <Route path="/participate">
-                <ParticipateScreen web3={this.state.web3} accounts={this.state.accounts} currentAccount={this.state.currentAccount} />
+                <ParticipateScreen web3={this.state.web3} accounts={this.state.accounts} currentAccount={this.state.currentAccount} client={this.state.client} />
               </Route>
               <Route path="/">
                 <StartScreen />

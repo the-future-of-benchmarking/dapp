@@ -8,7 +8,9 @@ import { Chip } from 'primereact/chip';
 import { Button } from 'primereact/button';
 
 import { InputTextarea } from 'primereact/inputtextarea';
-export class BenchmarkCreationScreen extends Component {
+import { Toast } from "primereact/toast";
+import { withContracts } from "./withContracts";
+class BenchmarkCreationScreenComponent extends Component {
 
     constructor(props) {
         super(props);
@@ -20,8 +22,11 @@ export class BenchmarkCreationScreen extends Component {
             isDescriptionTooLong: false,
             lowerBound: 0,
             upperBound: 1,
-            contractAddress: null
+            contractAddress: null,
+            contractUnit: null, 
+            isUnitTooLong: false
         }
+        this.toast = React.createRef();
     }
 
     gitInfo = GitInfo();
@@ -57,8 +62,31 @@ export class BenchmarkCreationScreen extends Component {
         }
     }
 
+    async submit(e){
+        e.preventDefault();
+        try{
+            let {_address} = await this.props.client.start(this.state.contractName, this.state.lowerBound, this.state.upperBound, this.state.contractUnit);
+            
+            
+            this.props.addContract({ address: _address, unit: this.state.contractUnit, min: this.state.lowerBound, max: this.state.upperBound, name: this.state.contractName, description: this.state.contractDescription })
+            this.showInfo("Erstellt");
+        }catch(e){
+            console.error(e)
+            this.showError(e.message);
+        }   
+    }
+
+    showError = (message) => {
+        this.toast.current.show({ severity: 'error', summary: 'Fehler', detail: message, life: 5000 });
+    }
+
+    showInfo = (message) => {
+        this.toast.current.show({ severity: 'info', summary: 'Info', detail: message, life: 5000 })
+      }
+
     render() {
         return (<div className="p-grid">
+            <Toast ref={this.toast} />
             <div className="p-col-6 p-offset-3">
                 <Card title="Benchmark erstellen">
                     <div className="p-grid">
@@ -165,7 +193,7 @@ export class BenchmarkCreationScreen extends Component {
                             </div>
 
                             <div className="p-field">
-                                <Button label="Erstellen" icon="pi pi-check" />
+                                <Button label="Erstellen" icon="pi pi-check" onClick={this.submit} disabled={!this.state.isContractNameToLong && !this.state.isDescriptionTooLong && !this.state.isUnitTooLong && !!this.state.contractName && !!this.state.contractDescription && !!this.state.contractUnit && !!this.state.upperBound && !!this.state.lowerBound} />
                             </div>
 
                             {this.state.contractAddress ? <div className="p-field">
@@ -187,3 +215,5 @@ export class BenchmarkCreationScreen extends Component {
     }
 
 }
+
+export const BenchmarkCreationScreen = withContracts(BenchmarkCreationScreenComponent)

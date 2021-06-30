@@ -17,9 +17,10 @@ export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, show
     let addAContract =(input) => {
         if(!web3.utils.isAddress(input)){
             showError("Konnte nicht hinzugefügt werden - Addresse nicht valide")
-            addContract(input)
             setContractInput("");
         }else{
+            addContract({address:input})
+            console.log(input, contracts)
             setContractInput("")
         }
     }

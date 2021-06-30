@@ -9,35 +9,58 @@ import { Button } from "primereact/button";
 
 export const BenchmarkParticipation = ({
     smartContractAddress,
-    showError
+    showError,
+    client
 }) => {
     const { setEntry, getContract } = useContracts([])
     const [entryInput, setEntryInput] = useState(0);
+    const [contract, setContract] = useState(null);
 
-    const currentContract = getContract(smartContractAddress);
+    getContract(smartContractAddress).then(el => setContract(el))
 
-    
-    console.log(currentContract)
+    let submit = async (address, input) => {
+        try {
+            setEntry(address, input)
+            await client.startFromAddress(address)
+            await client.participate(input)
+        } catch (e) {
+            if(e.message.includes("Internal JSON-RPC")){
+                let msg = JSON.parse(e.message.substring(53).trim().replace(/\n/g, '')).message
+                console.log("Nachricht", msg)
+                showError(msg);
+                return;
+            }
+            console.error(e.message)
+            showError(e.message)
+        }
 
-    return (
-        <div className="p-fluid p-grid, p-formgrid">
-            <Card title="Benchmark Teilnahme" className="">
-                <div className="p-field p-col-12">
-                    <div className="p-inputgroup">
+    }
 
-                    <Button label="Contribute" onClick={() => typeof currentContract.entry === "number" ? "" : setEntry(smartContractAddress, entryInput)} disabled={typeof currentContract.entry === "number"} />
-                    <span className="p-float-label">
-                        <InputNumber id="input" value={typeof currentContract.entry === "number" ? currentContract.entry : entryInput} onChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={0} maxFractionDigits={18} required={true} min={currentContract.min} max={currentContract.max} disabled={typeof currentContract.entry === "number"} />
-                        <label htmlFor="input">Benchmark Input {currentContract.unit ? `(in ${currentContract.unit} )`: ''}</label>
-                    </span>
+    if (!contract) {
+        return (<p>Loading...</p>)
+    } else {
+        return (
+            <div className="p-fluid p-grid, p-formgrid">
+                <Card title="Benchmark Teilnahme" className="">
+                    <div className="p-field p-col-12">
+                        <div className="p-inputgroup">
+
+                            <Button label="Contribute" onClick={() => typeof contract.entry === "number" ? "" : submit(smartContractAddress, entryInput)} disabled={typeof contract.entry === "number"} />
+                            <span className="p-float-label">
+                                <InputNumber id="input" value={typeof contract.entry === "number" ? contract.entry : entryInput} onChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={0} maxFractionDigits={18} required={true} min={contract.min} max={contract.max} disabled={typeof contract.entry === "number"} />
+                                <label htmlFor="input">Benchmark Input {contract.unit ? `(in ${contract.unit} )` : ''}</label>
+                            </span>
+                        </div>
                     </div>
+                </Card>
+                <div className="p-col-12">
+                    {typeof contract.entry === "number" ?
+                        <BenchmarkResult smartContractAddress={smartContractAddress} smartContractParticipants={contract.participants} smartContractResult={contract.result} smartContractUnit={contract.unit} smartContractEntry={contract.entry} bestInClass={contract.bestInClass} ratingValue={contract.rating} /> :
+                        ""
+                    }
                 </div>
-            </Card>
-            <div className="p-col-12">
-                {typeof currentContract.entry === "number" ? 
-                <BenchmarkResult smartContractAddress={smartContractAddress} smartContractParticipants={currentContract.participants} smartContractResult={currentContract.result} smartContractUnit={currentContract.unit} smartContractEntry={currentContract.entry} bestInClass={currentContract.bestInClass} ratingValue={currentContract.rating}/> :
-                ""
-                }
-            </div>
-        </div>)
+            </div>)
+    }
+
+
 }

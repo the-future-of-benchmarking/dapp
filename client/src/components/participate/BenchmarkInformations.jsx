@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import { Card } from "primereact/card";
 import { Knob } from 'primereact/knob';
 import { Chip } from 'primereact/chip';
@@ -6,12 +6,17 @@ import { useContracts } from "./contracts-hook";
 
 
 export const BenchmarkInformations = ({
-    smartContractAddress,showError
+    smartContractAddress,showError, details
 }) => {
+    const { getContract  } = useContracts([])
+    const [contract, setContract] = useState(null);
 
-    const { getContract,  } = useContracts([])
+    getContract(smartContractAddress).then(el => setContract(el))
+    
+    if(!contract){
+        return(<p>Loading...</p>)
+    }else{
 
-    const currentContract = getContract(smartContractAddress);
     return(
     <Card title="Benchmark Informationen" className="p-mb-4 p-mt-4">
                     <div className="p-grid">
@@ -22,7 +27,7 @@ export const BenchmarkInformations = ({
                         </div>
 
                         <div className="p-col-8">
-                            {!currentContract.name ? <p>Nicht gesetzt</p> : <p>{currentContract.name}</p>}
+                            {!contract.name ? <p>Nicht gesetzt</p> : <p>{contract.name}</p>}
                         </div>
 
             
@@ -32,7 +37,7 @@ export const BenchmarkInformations = ({
                         </div>
 
                         <div className="p-col-8">
-                            {!currentContract.description ? <p>Nicht gesetzt</p> :<p>{currentContract.description}</p>}
+                            {!contract.description ? <p>Nicht gesetzt</p> :<p>{contract.description}</p>}
                         </div>
 
                         <div className="p-col-4">
@@ -52,7 +57,7 @@ export const BenchmarkInformations = ({
                         <div className="p-col-8">
                             
                             
-                                {!currentContract.unit ? <p>"Keine Einheit gesetzt"</p> : <Chip template={currentContract.unit}></Chip>}
+                                {!contract.unit ? <p>"Keine Einheit gesetzt"</p> : <Chip template={contract.unit}></Chip>}
                             
                         </div>
 
@@ -62,13 +67,13 @@ export const BenchmarkInformations = ({
                             </p>
                         </div>
 
-                        {!currentContract.min || !currentContract.max ?
+                        {!contract.min || !contract.max ?
                             <div className="p-col-8"><p>Nicht gesetzt</p></div> : <>
                                 <div className="p-col-4">
-                                    <Knob value={currentContract.min} min={currentContract.min >= 0 ? currentContract.min : 0} max={currentContract.min < 0 ? 0 : currentContract.max} readOnly />
+                                    <Knob value={contract.min} min={contract.min >= 0 ? contract.min : 0} max={contract.min < 0 ? 0 : contract.max} readOnly />
                                 </div>
                                 <div className="p-col-4">
-                                    <Knob value={currentContract.max} min={currentContract.min >= 0 ? currentContract.min : 0} max={currentContract.max} readOnly />
+                                    <Knob value={contract.max} min={contract.min >= 0 ? contract.min : 0} max={contract.max} readOnly />
                                 </div>
                             </>
                         }
@@ -76,4 +81,5 @@ export const BenchmarkInformations = ({
 
                     </div>
                 </Card>)
+    }
 }
