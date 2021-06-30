@@ -1,48 +1,59 @@
-import { fromPrecision, maxSafeValue } from "numberUtil";
-import BenchmarkContract from "./contracts/BenchMark.json";
+import { fromPrecision, toPrecision } from "./numberUtil";
+// @ts-ignore
+import benchmarkContract from "./contracts/BenchMark.json";
+import Web3 from "web3";
 export class BenchmarkClient {
-    instance;
-    web3;
-    constructor(address = "0x26912E00C4698e3F1E391B0806473e6F83033507", web3) {
-        this.instance = new web3.eth.Contract(
-            BenchmarkContract.abi,
-            address,
-        );
-        this.web3 = web3;
+    constructor(account, provider) {
+        this.web3 = provider;
+        this.account = account;
     }
-
-    async participate(value) {
-        return await this.instance.participate(value);
-    }
-
-    async getBenchmarkDetails() {
-        const result = await this.instance.benchmark.call();
-        let response = { name: null, entries: null, sum: null, upper_bound: null, lower_bound: null, unit: null }
-        response.name = this.web3.utils.hexToUtf8(result.name)
-
-        if (fromPrecision(result.sum.toString()) < maxSafeValue) {
-            response.entries = +result.entries.toString()
-            response.sum = fromPrecision(result.sum.toString())
-            response.max = fromPrecision(result.upper_bound.toString()) < maxSafeValue ? fromPrecision(result.upper_bound.toString()) : maxSafeValue
-            response.min = fromPrecision(result.lower_bound.toString()) < maxSafeValue ? fromPrecision(result.lower_bound.toString()) : maxSafeValue
-            response.unit = this.web3.utils.hexToUtf8(result.unit)
-        } else {
-            throw new Error("Could not parse sum of contract " + result.name)
+    async executewithGas(method, from, call = true) {
+        let gasestimate = await method.estimateGas({ from });
+        let gasprice = await this.web3.eth.getGasPrice();
+        let round = (a) => a.toFixed(0);
+        if (!call) {
+            return await method.send({ from, gas: round(gasestimate * 1.5), gasPrice: round(+gasprice * 1.105) });
         }
+        return await method.call({ from, gas: round(gasestimate * 1.5), gasPrice: round(+gasprice * 1.1) });
+    }
+    async getDetails(account) {
+        const result = await this.executewithGas(this.BenchMarkInstance.methods.benchmark(), account);
+        let response = { name: null, description: null, entries: null, sum: null, upper_bound: null, lower_bound: null, unit: null };
+        response.name = this.web3.utils.hexToUtf8(result.name);
+        response.description = this.web3.utils.hexToUtf8(result.description)
+        //@ts-ignore
+        response.entries = +result.entries.toString();
+        //@ts-ignore
+        response.sum = fromPrecision(result.sum);
+        //@ts-ignore
+        response.upper_bound = fromPrecision(result.upper_bound.toString());
+        //@ts-ignore
+        response.lower_bound = fromPrecision(result.lower_bound.toString());
+        response.unit = this.web3.utils.hexToUtf8(result.unit);
         return response;
     }
-
-    async getBenchmarkAverage() {
-        let average = await this.instance.average()
-        // let arr = (average.words[0].toString()).split("");
-        // arr.splice(2, 0, '.')
-        // return Number(arr.join(""))
-        return fromPrecision(average.words[0].toString())
+    async provision(benchmarkName, lowerBound, upperBound, benchmarkUnit, desc, account) {
+        const BenchMark = new this.web3.eth.Contract(benchmarkContract.abi);
+        let deployerFn = await BenchMark.deploy({
+            data: benchmarkContract.bytecode,
+            arguments: [this.web3.utils.toHex(benchmarkName), this.web3.utils.toHex(lowerBound), this.web3.utils.toHex(upperBound), this.web3.utils.toHex(benchmarkUnit)],
+        });
+        return await this.executewithGas(deployerFn, account, false);
     }
-
-    async getBestInClass() {
-
+    async participate(value) {
+        return await this.executewithGas(this.BenchMarkInstance.methods.participate(this.web3.utils.toHex(toPrecision(value))), this.account, false);
     }
-
-
+    async start(name, lowerBound, upperBound, unit, desc) {
+        this.BenchMarkInstance = await this.provision(name, lowerBound, upperBound, unit,desc this.account);
+        console.log(this.BenchMarkInstance._address);
+    }
+    async startFromAddress(address) {
+        this.BenchMarkInstance = new this.web3.eth.Contract(benchmarkContract.abi, address);
+    }
+    async getResults(contribution) {
+        let best = await this.executewithGas(this.BenchMarkInstance.methods.bestRating(contribution), this.account);
+        let average = await this.executewithGas(this.BenchMarkInstance.methods.average(), this.account);
+        let averageRated = await this.executewithGas(this.BenchMarkInstance.methods.averageRating(contribution), this.account);
+        return { best, average: fromPrecision(average), averageRated };
+    }
 }

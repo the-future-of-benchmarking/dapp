@@ -18,6 +18,7 @@ contract BenchMark {
     struct Benchmark {
         bytes32 name;
         uint256 entries;
+        bytes32 description;
         uint256 sum;
         uint256 upper_bound;
         uint256 lower_bound;
@@ -41,7 +42,8 @@ contract BenchMark {
         bytes32 benchmarkName,
         uint256 lowerBound,
         uint256 upperBound,
-        bytes32 benchmarkUnit
+        bytes32 benchmarkUnit,
+        bytes32 benchmarkDescription
     ) {
         initiator = msg.sender;
 
@@ -56,7 +58,8 @@ contract BenchMark {
             sum: zero.fromUint(),
             upper_bound: upperBound.fromUint(),
             lower_bound: lowerBound.fromUint(),
-            unit: benchmarkUnit
+            unit: benchmarkUnit,
+            description: benchmarkDescription
         });
     }
 
