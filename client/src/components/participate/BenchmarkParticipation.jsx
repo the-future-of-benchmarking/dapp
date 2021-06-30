@@ -24,13 +24,26 @@ export const BenchmarkParticipation = ({
             await client.startFromAddress(address)
             await client.participate(input)
         } catch (e) {
-            if(e.message.includes("Internal JSON-RPC")){
-                let msg = JSON.parse(e.message.substring(53).trim().replace(/\n/g, '')).message
-                console.log("Nachricht", msg)
-                showError(msg);
-                return;
+            localStorage.setItem("error", e.message.substring(25))
+            let msg = JSON.parse(localStorage.getItem("error"))
+            console.error(msg)
+            if (e.message.includes("Internal JSON-RPC")) {
+
+                if (e.message.includes("VM Exception while processing transaction: revert")) {
+                    let a = e.message.replace("VM Exception while processing transaction: revert", "Smart Contract Fehler:")
+                    let msg = JSON.parse(a.substring(25)).message
+                    console.log("Nachricht", msg)
+                    showError(msg);
+                    return;
+                } else {
+                    let msg = JSON.parse(e.message.substring(25)).message
+                    console.log("Nachricht", msg)
+                    showError(msg);
+                    return;
+                }
+
             }
-            console.error(e.message)
+
             showError(e.message)
         }
 
