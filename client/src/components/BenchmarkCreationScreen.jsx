@@ -15,65 +15,81 @@ class BenchmarkCreationScreenComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            networkGuess: null,
-            contractName: null,
-            contractDescription: null,
-            isContractNameToLong: false,
+            networkGuess: "",
+            contractName: "",
+            contractDescription: "",
+            isContractNameTooLong: false,
             isDescriptionTooLong: false,
-            lowerBound: 0,
-            upperBound: 1,
+            lowerBound: 1,
+            upperBound: 2,
             contractAddress: null,
-            contractUnit: null, 
-            isUnitTooLong: false
+            contractUnit: "",
+            isUnitTooLong: false,
+            isFormDisabled: true
         }
         this.toast = React.createRef();
+        this.submit = this.submit.bind(this)
     }
 
     gitInfo = GitInfo();
 
     async componentDidMount() {
         let networkGuess = await this.props.web3.eth.net.getNetworkType();
-        console.log(networkGuess)
         this.setState({ networkGuess })
     }
 
     inputName(input) {
-        if (input.length > 32) {
-            this.setState({ isContractNameToLong: true })
-        } else {
-            this.setState({ contractName: input, isContractNameToLong: false })
-        }
+        this.input(input, "name")
 
     }
 
     inputDesc(input) {
-        if (input.length > 32) {
-            this.setState({ isDescriptionTooLong: true })
-        } else {
-            this.setState({ contractDescription: input, isDescriptionTooLong: false })
-        }
+        this.input(input, "description")
     }
 
     inputUnit(input) {
+        this.input(input, "unit")
+    }
+
+    capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    checkDisabled(state) {
+        let a=  ['name', 'description', 'unit'].map(value => {
+            let cValue = this.capitalizeFirstLetter(value)
+            console.log(state[`is${this.capitalizeFirstLetter(cValue)}TooLong`], state[`contract${cValue}`].length < 1)
+            return state[`is${this.capitalizeFirstLetter(cValue)}TooLong`] && state[`contract${cValue}`].length < 1
+        }).includes(true)
+        console.log(['name', 'description', 'unit'].map(value => {
+            let cValue = this.capitalizeFirstLetter(value)
+            console.log(state[`is${this.capitalizeFirstLetter(cValue)}TooLong`], state[`contract${cValue}`].length < 1)
+            return state[`is${this.capitalizeFirstLetter(cValue)}TooLong`] && state[`contract${cValue}`].length < 1
+        }), a);
+        return a;
+    }
+
+    input(input, value) {
+        let cValue = this.capitalizeFirstLetter(value)
         if (input.length > 32) {
-            this.setState({ isUnitTooLong: true })
+            this.setState(state => ({ [`is${cValue}TooLong`]: true, isFormDisabled: this.checkDisabled(state) }))
         } else {
-            this.setState({ contractUnit: input, isUnitTooLong: false })
+            this.setState(state => ({ [`is${cValue}TooLong`]: true, isFormDisabled: this.checkDisabled(state), [`contract${cValue}`]: input }))
         }
     }
 
-    async submit(e){
+    async submit(e) {
         e.preventDefault();
-        try{
-            let {_address} = await this.props.client.start(this.state.contractName, this.state.lowerBound, this.state.upperBound, this.state.contractUnit);
-            
-            
+        try {
+            console.log(this.props)
+            let { _address } = await this.props.client.start(this.state.contractName, this.state.lowerBound, this.state.upperBound, this.state.contractUnit);
+
             this.props.addContract({ address: _address, unit: this.state.contractUnit, min: this.state.lowerBound, max: this.state.upperBound, name: this.state.contractName, description: this.state.contractDescription })
             this.showInfo("Erstellt");
-        }catch(e){
+        } catch (e) {
             console.error(e)
             this.showError(e.message);
-        }   
+        }
     }
 
     showError = (message) => {
@@ -82,9 +98,15 @@ class BenchmarkCreationScreenComponent extends Component {
 
     showInfo = (message) => {
         this.toast.current.show({ severity: 'info', summary: 'Info', detail: message, life: 5000 })
-      }
+    }
+
+    isEmpty(str) {
+        console.log(str, str.length)
+        return str.length === 0;
+    }
 
     render() {
+        console.log(this.state.isContractNameTooLong && this.state.isDescriptionTooLong && this.state.isUnitTooLong && this.isEmpty(this.state.contractName) && this.isEmpty(this.state.contractDescription) && this.isEmpty(this.state.contractUnit) && this.isEmpty(this.state.upperBound) && this.isEmpty(this.state.lowerBound))
         return (<div className="p-grid">
             <Toast ref={this.toast} />
             <div className="p-col-6 p-offset-3">
@@ -112,12 +134,12 @@ class BenchmarkCreationScreenComponent extends Component {
                                         <label htmlFor="name">Name des Benchmarks</label>
                                     </div>
                                     <div className="p-col-4">
-                                        <InputText id="name" value={this.state.contractName} onChange={(e) => this.inputName(e.target.value)} className={`${this.state.isContractNameToLong ? "p-invalid" : ""}`} />
+                                        <InputText id="name" value={this.state.contractName} onChange={(e) => this.inputName(e.target.value)} className={`${this.state.isContractNameTooLong ? "p-invalid" : ""}`} />
                                     </div>
                                 </div>
                                 <div className="p-grid">
                                     <div className="p-col-4 p-offset-4">
-                                        {!this.state.isContractNameToLong ? <small id="name-help" className="p-d-block">Bitte Name eingeben</small> :
+                                        {!this.state.isContractNameTooLong ? <small id="name-help" className="p-d-block">Bitte Name eingeben</small> :
                                             <small id="name-help" className="p-d-block" style={{ color: "red" }}>Name ist zu lang</small>}
                                     </div>
                                 </div>
@@ -193,14 +215,14 @@ class BenchmarkCreationScreenComponent extends Component {
                             </div>
 
                             <div className="p-field">
-                                <Button label="Erstellen" icon="pi pi-check" onClick={this.submit} disabled={!this.state.isContractNameToLong && !this.state.isDescriptionTooLong && !this.state.isUnitTooLong && !!this.state.contractName && !!this.state.contractDescription && !!this.state.contractUnit && !!this.state.upperBound && !!this.state.lowerBound} />
+                                <Button label="Erstellen" icon="pi pi-check" onClick={this.submit} disabled={this.state.isFormDisabled} />
                             </div>
 
                             {this.state.contractAddress ? <div className="p-field">
                                 <div className="p-grid">
                                     <div className="p-col-12">
                                         <Fieldset legend="Contract Adresse">
-                                            <Chip style={{backgroundColor: "#4caf50", color: "#ffffff"}} template={this.state.contractAddress}></Chip>
+                                            <Chip style={{ backgroundColor: "#4caf50", color: "#ffffff" }} template={this.state.contractAddress}></Chip>
                                         </Fieldset>
                                     </div>
                                 </div>

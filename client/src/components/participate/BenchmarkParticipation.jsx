@@ -20,13 +20,10 @@ export const BenchmarkParticipation = ({
 
     let submit = async (address, input) => {
         try {
-            setEntry(address, input)
             await client.startFromAddress(address)
             await client.participate(input)
+            setEntry(address, input)
         } catch (e) {
-            localStorage.setItem("error", e.message.substring(25))
-            let msg = JSON.parse(localStorage.getItem("error"))
-            console.error(msg)
             if (e.message.includes("Internal JSON-RPC")) {
 
                 if (e.message.includes("VM Exception while processing transaction: revert")) {
