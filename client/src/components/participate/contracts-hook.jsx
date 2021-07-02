@@ -11,6 +11,8 @@ export const useContracts = initialContracts => {
             setContracts(contracts => contracts && contracts.length > 0 ? [...contracts, entry] : [entry])
         }else if(Web3.utils.isAddress(entry)){
             await client.startFromAddress(entry);
+            console.log(entry, client)
+            await client.provision(entry.name, entry.lowerBound, entry.upperBound, entry.unit, entry.description)
             const details = await client.getDetails();
             setContracts(contracts => contracts && contracts.length > 0 ? [...contracts, details] : [details])
         }else{

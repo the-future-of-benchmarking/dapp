@@ -1,0 +1,9 @@
+.creation .card {
+    min-width: 450px;
+}
+.creation .card form {
+    margin-top: 2rem;
+}
+.creation .card .p-field {
+    margin-bottom: 1.5rem;
+}

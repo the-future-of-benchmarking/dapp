@@ -6,29 +6,26 @@ import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Chip } from 'primereact/chip';
 import { Button } from 'primereact/button';
-
+import { classNames } from 'primereact/utils';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Toast } from "primereact/toast";
 import { withContracts } from "./withContracts";
+import { Field, Form } from "react-final-form";
+import "./BenchmarkCreation.css"
+
 class BenchmarkCreationScreenComponent extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
             networkGuess: "",
-            contractName: "",
-            contractDescription: "",
-            isContractNameTooLong: false,
-            isDescriptionTooLong: false,
-            lowerBound: 1,
-            upperBound: 2,
-            contractAddress: null,
-            contractUnit: "",
-            isUnitTooLong: false,
-            isFormDisabled: true
         }
         this.toast = React.createRef();
-        this.submit = this.submit.bind(this)
+
+        this.onSubmit = this.onSubmit.bind(this)
+        this.isFormFieldValid = this.isFormFieldValid.bind(this)
+        this.getFormErrorMessage = this.getFormErrorMessage.bind(this)
+        this.validate = this.validate.bind(this)
     }
 
     gitInfo = GitInfo();
@@ -38,59 +35,72 @@ class BenchmarkCreationScreenComponent extends Component {
         this.setState({ networkGuess })
     }
 
-    inputName(input) {
-        this.input(input, "name")
+    validate = (data) => {
+        let errors = {};
 
-    }
 
-    inputDesc(input) {
-        this.input(input, "description")
-    }
 
-    inputUnit(input) {
-        this.input(input, "unit")
-    }
-
-    capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-
-    checkDisabled(state) {
-        let a=  ['name', 'description', 'unit'].map(value => {
-            let cValue = this.capitalizeFirstLetter(value)
-            console.log(state[`is${this.capitalizeFirstLetter(cValue)}TooLong`], state[`contract${cValue}`].length < 1)
-            return state[`is${this.capitalizeFirstLetter(cValue)}TooLong`] && state[`contract${cValue}`].length < 1
-        }).includes(true)
-        console.log(['name', 'description', 'unit'].map(value => {
-            let cValue = this.capitalizeFirstLetter(value)
-            console.log(state[`is${this.capitalizeFirstLetter(cValue)}TooLong`], state[`contract${cValue}`].length < 1)
-            return state[`is${this.capitalizeFirstLetter(cValue)}TooLong`] && state[`contract${cValue}`].length < 1
-        }), a);
-        return a;
-    }
-
-    input(input, value) {
-        let cValue = this.capitalizeFirstLetter(value)
-        if (input.length > 32) {
-            this.setState(state => ({ [`is${cValue}TooLong`]: true, isFormDisabled: this.checkDisabled(state) }))
-        } else {
-            this.setState(state => ({ [`is${cValue}TooLong`]: true, isFormDisabled: this.checkDisabled(state), [`contract${cValue}`]: input }))
+        if (!data.name) {
+            errors.name = "Bitte Name eingeben"
         }
-    }
 
-    async submit(e) {
-        e.preventDefault();
+        if (!data.description) {
+            errors.description = "Bitte Beschreibung eingeben"
+        }
+
+        if (!data.unit) {
+            errors.unit = "Bitte Einheit eingeben"
+        }
+
+        if (!data.lowerBound) {
+            errors.lowerBound = "Bitte untere Grenze eingeben"
+        }
+
+        if (!data.upperBound) {
+            errors.upperBound = "Bitte obere Grenze eingeben"
+        }
+
+        // 
+
+        if (data.name.length > 32) {
+            errors.name = "Name ist zu lang, maximal 32 Zeichen"
+        }
+
+        if (data.description > 32) {
+            errors.description = "Beschreibung ist zu lang, maximal 32 Zeichen"
+        }
+
+        if (data.unit > 32) {
+            errors.unit = "Einheit ist zu lang, maximal 32 Zeichen"
+        }
+
+
+        return errors;
+    };
+
+
+
+    async onSubmit(data, form) {
+        console.log(data)
         try {
-            console.log(this.props)
-            let { _address } = await this.props.client.start(this.state.contractName, this.state.lowerBound, this.state.upperBound, this.state.contractUnit);
+            let { _address } = await this.props.client.start(this.state.name, this.state.lowerBound, this.state.upperBound, this.state.unit);
 
-            this.props.addContract({ address: _address, unit: this.state.contractUnit, min: this.state.lowerBound, max: this.state.upperBound, name: this.state.contractName, description: this.state.contractDescription })
-            this.showInfo("Erstellt");
+            let returnData = await this.props.addContract({ address: _address, unit: this.state.unit, min: this.state.lowerBound, max: this.state.upperBound, name: this.state.name, description: this.state.description })
+            console.log(returnData)
+            this.setState({submitted: true})
+            this.showSuccess("Erledigt")
+            form.restart();
         } catch (e) {
             console.error(e)
             this.showError(e.message);
         }
-    }
+
+    };
+
+    isFormFieldValid = (meta) => !!(meta.touched && meta.error);
+    getFormErrorMessage(meta) {
+        return this.isFormFieldValid(meta) && <small className="p-error p-mb-2">{meta.error}</small>;
+    };
 
     showError = (message) => {
         this.toast.current.show({ severity: 'error', summary: 'Fehler', detail: message, life: 5000 });
@@ -100,140 +110,122 @@ class BenchmarkCreationScreenComponent extends Component {
         this.toast.current.show({ severity: 'info', summary: 'Info', detail: message, life: 5000 })
     }
 
-    isEmpty(str) {
-        console.log(str, str.length)
-        return str.length === 0;
+    showSuccess = (message) => {
+        this.toast.current.show({ severity: 'success', summary: 'Erfolg', detail: message, life: 5000 })
     }
 
     render() {
-        console.log(this.state.isContractNameTooLong && this.state.isDescriptionTooLong && this.state.isUnitTooLong && this.isEmpty(this.state.contractName) && this.isEmpty(this.state.contractDescription) && this.isEmpty(this.state.contractUnit) && this.isEmpty(this.state.upperBound) && this.isEmpty(this.state.lowerBound))
-        return (<div className="p-grid">
+        return (<>
             <Toast ref={this.toast} />
-            <div className="p-col-6 p-offset-3">
-                <Card title="Benchmark erstellen">
-                    <div className="p-grid">
-                        <div className="p-col-6">
-                            <Fieldset legend="Account">
-                                {this.props.currentAccount}
-                            </Fieldset>
+            <div className="p-grid">
+
+
+
+
+
+
+                <div className="p-col-6 p-offset-3">
+                    <Card title="Benchmark erstellen">
+                        <div className="p-grid">
+                            <div className="p-col-6">
+                                <Fieldset legend="Account">
+                                    {this.props.currentAccount}
+                                </Fieldset>
+                            </div>
+                            <div className="p-col-3">
+                                <Fieldset legend="Network Guess">
+                                    {this.state.networkGuess}
+                                </Fieldset>
+                            </div>
+                            <div className="p-col-3">
+                                <Fieldset legend="Frontend Version">
+                                    {this.gitInfo.commit.shortHash}
+                                </Fieldset>
+                            </div>
+
+
+                            <div className="p-col-10 p-offset-1">
+                                <div className="creation">
+                                    <Form onSubmit={this.onSubmit} initialValues={{ name: '', description: '', unit: '', lowerBound: 1, upperBound: 2 }} validate={this.validate} render={({ handleSubmit }) => (
+                                        <form onSubmit={handleSubmit} className="p-fluid">
+                                            <Field name="name" render={({ input, meta }) => (
+                                                <div className="p-field p-mt-2">
+                                                    <span className="p-float-label">
+                                                        <InputText id="name" {...input} autoFocus className={classNames({ 'p-invalid': this.isFormFieldValid(meta) })} />
+                                                        <label htmlFor="name" className={classNames({ 'p-error': this.isFormFieldValid(meta) })}>Name*</label>
+                                                    </span>
+                                                    {this.getFormErrorMessage(meta)}
+
+                                                </div>
+                                            )} />
+
+                                            <Field name="description" render={({ input, meta }) => (
+                                                <div className="p-field p-mt-2">
+                                                    <span className="p-float-label">
+                                                        <InputTextarea id="desc" {...input} className={classNames({ 'p-invalid': this.isFormFieldValid(meta) })} />
+                                                        <label htmlFor="desc" className={classNames({ 'p-error': this.isFormFieldValid(meta) })}>Beschreibung*</label>
+                                                    </span>
+                                                    {this.getFormErrorMessage(meta)}
+
+                                                </div>
+                                            )} />
+
+                                            <Field name="unit" render={({ input, meta }) => (
+                                                <div className="p-field p-mt-2">
+                                                    <span className="p-float-label">
+                                                        <InputText id="unit" {...input} className={classNames({ 'p-invalid': this.isFormFieldValid(meta) })} />
+                                                        <label htmlFor="unit" className={classNames({ 'p-error': this.isFormFieldValid(meta) })}>Einheit*</label>
+                                                    </span>
+                                                    {this.getFormErrorMessage(meta)}
+
+                                                </div>
+                                            )} />
+
+                                            <Field name="lowerBound" parse={(value, name) => parseFloat(value)} render={({ input, meta }) => (
+                                                <div className="p-field p-mt-2">
+                                                    <span className="p-float-label">
+                                                        <InputNumber inputId="lowerBound" {...input} showButtons buttonLayout="horizontal" step={0.001} className={classNames({ 'p-invalid': this.isFormFieldValid(meta) })}
+                                                            decrementButtonClassName="p-button-danger" incrementButtonClassName="p-button-success" incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus" />
+                                                        <label htmlFor="lowerBound" className={classNames({ 'p-error': this.isFormFieldValid(meta) })}>Untergrenze*</label>
+                                                    </span>
+                                                    {this.getFormErrorMessage(meta)}
+
+                                                </div>
+                                            )} />
+
+                                            <Field name="upperBound" parse={(value, name) => parseFloat(value)} render={({ input, meta }) => (
+                                                <div className="p-field p-mt-2">
+                                                    <span className="p-float-label">
+                                                        <InputNumber inputId="upperBound" {...input} showButtons buttonLayout="horizontal" step={0.001} className={classNames({ 'p-invalid': this.isFormFieldValid(meta) })}
+                                                            decrementButtonClassName="p-button-danger" incrementButtonClassName="p-button-success" incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus" />
+                                                        <label htmlFor="upperBound" className={classNames({ 'p-error': this.isFormFieldValid(meta) })}>Obergrenze*</label>
+                                                    </span>
+                                                    {this.getFormErrorMessage(meta)}
+
+                                                </div>
+                                            )} />
+
+                                            <Button type="submit" label="Submit" className="p-mt-2" />
+                                        </form>
+                                    )} />
+
+                                    {this.state.contractAddress ? <div className="p-field">
+                                        <div className="p-grid">
+                                            <div className="p-col-12">
+                                                <Fieldset legend="Contract Adresse">
+                                                    <Chip style={{ backgroundColor: "#4caf50", color: "#ffffff" }} template={this.state.contractAddress}></Chip>
+                                                </Fieldset>
+                                            </div>
+                                        </div>
+                                    </div> : ""}
+
+                                </div>
+                            </div>
                         </div>
-                        <div className="p-col-3">
-                            <Fieldset legend="Network Guess">
-                                {this.state.networkGuess}
-                            </Fieldset>
-                        </div>
-                        <div className="p-col-3">
-                            <Fieldset legend="Frontend Version">
-                                {this.gitInfo.commit.shortHash}
-                            </Fieldset>
-                        </div>
-                        <div className="p-col-10 p-offset-1">
-                            <div className="p-field">
-                                <div className="p-grid">
-                                    <div className="p-col-4">
-                                        <label htmlFor="name">Name des Benchmarks</label>
-                                    </div>
-                                    <div className="p-col-4">
-                                        <InputText id="name" value={this.state.contractName} onChange={(e) => this.inputName(e.target.value)} className={`${this.state.isContractNameTooLong ? "p-invalid" : ""}`} />
-                                    </div>
-                                </div>
-                                <div className="p-grid">
-                                    <div className="p-col-4 p-offset-4">
-                                        {!this.state.isContractNameTooLong ? <small id="name-help" className="p-d-block">Bitte Name eingeben</small> :
-                                            <small id="name-help" className="p-d-block" style={{ color: "red" }}>Name ist zu lang</small>}
-                                    </div>
-                                </div>
-                            </div>
+                    </Card>
+                </div>
 
-                            <div className="p-field">
-                                <div className="p-grid">
-                                    <div className="p-col-4">
-                                        <label htmlFor="desc">Beschreibung des Benchmarks</label>
-                                    </div>
-                                    <div className="p-col-4">
-                                        <InputTextarea id="desc" value={this.state.contractDescription} onChange={(e) => this.inputDesc(e.target.value)} rows={5} cols={30} autoResize className={`${this.state.isDescriptionTooLong ? "p-invalid" : ""}`} />
-                                    </div>
-                                </div>
-                                <div className="p-grid">
-                                    <div className="p-col-4 p-offset-4">
-                                        {!this.state.isDescriptionTooLong ? <small id="desc-help" className="p-d-block">Bitte Beschreibung eingeben</small> :
-                                            <small id="desc-help" className="p-d-block" style={{ color: "red" }}>Beschreibung ist zu lang</small>}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-field">
-                                <div className="p-grid">
-                                    <div className="p-col-4">
-                                        <label htmlFor="unit">Einheit des Benchmarks</label>
-                                    </div>
-                                    <div className="p-col-4">
-                                        <InputText id="unit" value={this.state.contractUnit} onChange={(e) => this.inputUnit(e.target.value)} className={`${this.state.isContractUnitToLong ? "p-invalid" : ""}`} />
-
-                                    </div>
-                                </div>
-                                <div className="p-grid">
-                                    <div className="p-col-4 p-offset-4">
-                                        {!this.state.isContractUnitToLong ? <small id="unit-help" className="p-d-block">Bitte Einheit (z.B. Mio. €) eingeben</small> :
-                                            <small id="unit-help" className="p-d-block" style={{ color: "red" }}>Einheit ist zu lang</small>}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-field">
-                                <div className="p-grid">
-                                    <div className="p-col-4">
-                                        <label htmlFor="lowerBound">Untere Wertegrenze</label>
-                                    </div>
-                                    <div className="p-col-4">
-                                        <InputNumber inputId="lowerBound" value={this.state.lowerBound} onValueChange={(e) => this.setState({ lowerBound: e.value })} showButtons buttonLayout="horizontal" step={0.001}
-                                            decrementButtonClassName="p-button-danger" incrementButtonClassName="p-button-success" incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus" />
-                                    </div>
-                                </div>
-                                <div className="p-grid">
-                                    <div className="p-col-4 p-offset-4">
-                                        <small id="lower-help" className="p-d-block">Untere Wertegrenze angeben</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-field">
-                                <div className="p-grid">
-                                    <div className="p-col-4">
-                                        <label htmlFor="upperBound">Obere Wertegrenze</label>
-                                    </div>
-                                    <div className="p-col-4">
-                                        <InputNumber inputId="upperBound" value={this.state.upperBound} onValueChange={(e) => this.setState({ upperBound: e.value })} showButtons buttonLayout="horizontal" step={0.001}
-                                            decrementButtonClassName="p-button-danger" incrementButtonClassName="p-button-success" incrementButtonIcon="pi pi-plus" decrementButtonIcon="pi pi-minus" />
-                                    </div>
-                                </div>
-                                <div className="p-grid">
-                                    <div className="p-col-4 p-offset-4">
-                                        <small id="upper-help" className="p-d-block">Obere Wertegrenze angeben</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-field">
-                                <Button label="Erstellen" icon="pi pi-check" onClick={this.submit} disabled={this.state.isFormDisabled} />
-                            </div>
-
-                            {this.state.contractAddress ? <div className="p-field">
-                                <div className="p-grid">
-                                    <div className="p-col-12">
-                                        <Fieldset legend="Contract Adresse">
-                                            <Chip style={{ backgroundColor: "#4caf50", color: "#ffffff" }} template={this.state.contractAddress}></Chip>
-                                        </Fieldset>
-                                    </div>
-                                </div>
-                            </div> : ""}
-
-                        </div>
-                    </div>
-                </Card>
-            </div>
-
-        </div>)
+            </div></>)
     }
 
 }

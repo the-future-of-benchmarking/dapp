@@ -2,12 +2,13 @@ import { fromPrecision, toPrecision } from "./numberUtil";
 // @ts-ignore
 import benchmarkContract from "./contracts/BenchMark.json";
 import Web3 from "web3";
-export class BenchmarkClient {
-    constructor(account, provider) {
-        this.web3 = provider;
-        this.account = account;
+
+class BlockChainInteractor {
+    web3;
+    constructor(web3){
+        this.web3 = web3;
     }
-    async executewithGas(method, from, call = true) {
+	async executewithGas(method, from, call = true) {
         let gasestimate = await method.estimateGas({ from });
         let gasprice = await this.web3.eth.getGasPrice();
         let round = (a) => a.toFixed(0);
@@ -16,6 +17,38 @@ export class BenchmarkClient {
             return send;
         }
         return await method.call({ from, gas: round(gasestimate * 1.5), gasPrice: round(+gasprice * 1.1) });
+    }
+	
+	toWeirdString(str) {
+        return Web3.utils.padLeft(Web3.utils.toHex(str), 64)
+    }
+}
+
+export class BenchmarkFactory extends BlockChainInteractor {
+	account;
+	constructor(account, provider) {
+        super(provider);
+        this.account = account;
+    }
+	async provision(benchmarkName, lowerBound, upperBound, benchmarkUnit, desc) {
+        console.log(benchmarkName, lowerBound, upperBound, benchmarkUnit, desc)
+        const BenchMark = new this.web3.eth.Contract(benchmarkContract.abi);
+        let deployerFn = await BenchMark.deploy({
+            data: benchmarkContract.bytecode,
+            arguments: [this.toWeirdString(benchmarkName), this.web3.utils.toHex(lowerBound), this.web3.utils.toHex(upperBound), this.toWeirdString(benchmarkUnit), this.toWeirdString(desc)],
+        });
+        let returnValue = await this.executewithGas(deployerFn, this.account, false);
+		return new BenchmarkClient(this.account, this.web3, returnValue._address);
+    }
+}
+
+export class BenchmarkClient extends BlockChainInteractor {
+	BenchMarkInstance = null;
+	account;
+    constructor(account, provider, address) {
+        super(provider);
+        this.account = account;
+		this.BenchMarkInstance = new this.web3.eth.Contract(benchmarkContract.abi, address);
     }
     async getDetails() {
         const result = await this.executewithGas(this.BenchMarkInstance.methods.benchmark(), this.account);
@@ -34,23 +67,9 @@ export class BenchmarkClient {
         response.address = this.BenchMarkInstance._address;
         return response;
     }
-    async provision(benchmarkName, lowerBound, upperBound, benchmarkUnit, desc) {
-        const BenchMark = new this.web3.eth.Contract(benchmarkContract.abi);
-        let deployerFn = await BenchMark.deploy({
-            data: benchmarkContract.bytecode,
-            arguments: [this.web3.utils.toHex(benchmarkName), this.web3.utils.toHex(lowerBound), this.web3.utils.toHex(upperBound), this.web3.utils.toHex(benchmarkUnit)],
-        });
-        return await this.executewithGas(deployerFn, this.account, false);
-    }
+    
     async participate(value) {
         return await this.executewithGas(this.BenchMarkInstance.methods.participate(this.web3.utils.toHex(toPrecision(value))), this.account, false);
-    }
-    async start(name, lowerBound, upperBound, unit, desc) {
-        this.BenchMarkInstance = await this.provision(name, lowerBound, upperBound, unit,desc, this.account);
-        console.log(this.BenchMarkInstance._address);
-    }
-    async startFromAddress(address) {
-        this.BenchMarkInstance = new this.web3.eth.Contract(benchmarkContract.abi, address);
     }
     async getResults(contribution) {
         let best = await this.executewithGas(this.BenchMarkInstance.methods.bestRating(contribution), this.account);
