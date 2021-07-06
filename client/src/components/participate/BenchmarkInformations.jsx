@@ -67,13 +67,13 @@ export const BenchmarkInformations = ({
                             </p>
                         </div>
 
-                        {!contract.min || !contract.max ?
+                        {!contract.lower_bound || !contract.upper_bound ?
                             <div className="p-col-8"><p>Nicht gesetzt</p></div> : <>
                                 <div className="p-col-4">
-                                    <Knob value={contract.min} min={contract.min >= 0 ? contract.min : 0} max={contract.min < 0 ? 0 : contract.max} readOnly />
+                                    <Knob value={contract.lower_bound} min={contract.lower_bound >= 0 ? contract.lower_bound : 0} max={contract.lower_bound < 0 ? 0 : contract.upper_bound} readOnly />
                                 </div>
                                 <div className="p-col-4">
-                                    <Knob value={contract.max} min={contract.min >= 0 ? contract.min : 0} max={contract.max} readOnly />
+                                    <Knob value={contract.upper_bound} min={contract.lower_bound >= 0 ? contract.lower_bound : 0} max={contract.upper_bound} readOnly />
                                 </div>
                             </>
                         }

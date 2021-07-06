@@ -7,7 +7,6 @@ import { SavedContracts } from "./participate/SavedContracts";
 import { BenchmarkInformations } from "./participate/BenchmarkInformations";
 import { BenchmarkParticipation } from "./participate/BenchmarkParticipation";
 import { BenchmarkClient } from "BenchmarkClient";
-import { withContracts } from "./withContracts";
 
 
 export class ParticipateScreenComponent extends Component {
@@ -38,9 +37,9 @@ export class ParticipateScreenComponent extends Component {
         if (this.validateAddress(address)) {
 
             try {
-                await this.props.client.startFromAddress(address)
+                const client = new BenchmarkClient(this.props.web3, address)
 
-                let element = this.props.getContract(address)
+                const element = await client.getDetails()
                 if(element){
                     this.setState({
                         smartContractAddress: address,
@@ -84,11 +83,11 @@ export class ParticipateScreenComponent extends Component {
 
             </div>
             <div className="p-col-7">
-                {this.state.smartContractAddress ? <BenchmarkParticipation smartContractAddress={this.state.smartContractAddress} showError={this.showError} client={this.props.client} /> : <></>}
+                {this.state.smartContractAddress ? <BenchmarkParticipation smartContractAddress={this.state.smartContractAddress} showError={this.showError} web3={this.props.web3} /> : <></>}
             </div>
 
         </div>)
     }
 }
 
-export const ParticipateScreen = withContracts(ParticipateScreenComponent)
+export const ParticipateScreen = ParticipateScreenComponent

@@ -9,9 +9,10 @@ import { Button } from 'primereact/button';
 import { classNames } from 'primereact/utils';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Toast } from "primereact/toast";
-import { withContracts } from "./withContracts";
 import { Field, Form } from "react-final-form";
 import "./BenchmarkCreation.css"
+import { Synchronization } from "Synchronization";
+import { BenchmarkClient, BenchmarkFactory } from "BenchmarkClient";
 
 class BenchmarkCreationScreenComponent extends Component {
 
@@ -36,9 +37,8 @@ class BenchmarkCreationScreenComponent extends Component {
     }
 
     validate = (data) => {
+
         let errors = {};
-
-
 
         if (!data.name) {
             errors.name = "Bitte Name eingeben"
@@ -66,11 +66,11 @@ class BenchmarkCreationScreenComponent extends Component {
             errors.name = "Name ist zu lang, maximal 32 Zeichen"
         }
 
-        if (data.description > 32) {
+        if (data.description.length > 32) {
             errors.description = "Beschreibung ist zu lang, maximal 32 Zeichen"
         }
 
-        if (data.unit > 32) {
+        if (data.unit.length > 32) {
             errors.unit = "Einheit ist zu lang, maximal 32 Zeichen"
         }
 
@@ -83,12 +83,16 @@ class BenchmarkCreationScreenComponent extends Component {
     async onSubmit(data, form) {
         console.log(data)
         try {
-            let { _address } = await this.props.client.start(this.state.name, this.state.lowerBound, this.state.upperBound, this.state.unit);
+            const storage = new Synchronization()
+            const factory = new BenchmarkFactory(this.props.web3)
+            const client = await factory.provision(data.name, data.lowerBound, data.upperBound, data.unit, data.description)
 
-            let returnData = await this.props.addContract({ address: _address, unit: this.state.unit, min: this.state.lowerBound, max: this.state.upperBound, name: this.state.name, description: this.state.description })
-            console.log(returnData)
-            this.setState({submitted: true})
-            this.showSuccess("Erledigt")
+            const returnedDetails = await client.getDetails()
+
+            storage.addItem(returnedDetails)
+
+            this.setState({ submitted: true })
+            this.showSuccess("Angelegt")
             form.restart();
         } catch (e) {
             console.error(e)
@@ -118,11 +122,6 @@ class BenchmarkCreationScreenComponent extends Component {
         return (<>
             <Toast ref={this.toast} />
             <div className="p-grid">
-
-
-
-
-
 
                 <div className="p-col-6 p-offset-3">
                     <Card title="Benchmark erstellen">
@@ -181,7 +180,7 @@ class BenchmarkCreationScreenComponent extends Component {
                                                 </div>
                                             )} />
 
-                                            <Field name="lowerBound" parse={(value, name) => parseFloat(value)} render={({ input, meta }) => (
+                                             <Field name="lowerBound" parse={(value, name) => parseFloat(value.value)} render={({ input, meta }) => (
                                                 <div className="p-field p-mt-2">
                                                     <span className="p-float-label">
                                                         <InputNumber inputId="lowerBound" {...input} showButtons buttonLayout="horizontal" step={0.001} className={classNames({ 'p-invalid': this.isFormFieldValid(meta) })}
@@ -191,9 +190,9 @@ class BenchmarkCreationScreenComponent extends Component {
                                                     {this.getFormErrorMessage(meta)}
 
                                                 </div>
-                                            )} />
+                                            )} /> 
 
-                                            <Field name="upperBound" parse={(value, name) => parseFloat(value)} render={({ input, meta }) => (
+                                            <Field name="upperBound" parse={(value, name) => parseFloat(value.value)} render={({ input, meta }) => (
                                                 <div className="p-field p-mt-2">
                                                     <span className="p-float-label">
                                                         <InputNumber inputId="upperBound" {...input} showButtons buttonLayout="horizontal" step={0.001} className={classNames({ 'p-invalid': this.isFormFieldValid(meta) })}
@@ -230,4 +229,4 @@ class BenchmarkCreationScreenComponent extends Component {
 
 }
 
-export const BenchmarkCreationScreen = withContracts(BenchmarkCreationScreenComponent)
+export const BenchmarkCreationScreen = BenchmarkCreationScreenComponent

@@ -8,10 +8,11 @@ export class Synchronization {
     }
 
     getLastActualization(item) {
+        this.deserialize();
         if (item.actualized) {
             let actualized = DateTime.fromISO(item.actualized)
-            let current = new DateTime();
-            let refresh = current.diff(actualized, "seconds")["seconds"] > this.timeOutMinutes;
+            let current = DateTime.now();
+            let refresh = current.diff(actualized, "minutes")["minutes"] > this.timeOutMinutes;
             return { refresh, ...item }
         } else {
             return { refresh: true, ...item }
@@ -24,6 +25,7 @@ export class Synchronization {
     }
 
     getItem(address){
+        this.deserialize();
         let foundData = this.data.find(element => address === element.address)
         if (foundData) {
             return this.getLastActualization(foundData)
@@ -32,23 +34,41 @@ export class Synchronization {
         }
     }
 
-    addItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address}){
-        this.data.push({ name, description, entries, sum, upper_bound, lower_bound, unit, address, refresh: false, actualized: new DateTime().toISO()});
-        this.serialize();
+    addItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address}, contribution){
+        console.log({ name, description, entries, sum, upper_bound, lower_bound, unit, address}, contribution)
+        this.deserialize();
+        if(this.data.filter((el) => el.address === address).length < 1){
+            this.data.push({ name, description, entries, sum, upper_bound, lower_bound, unit, address, contribution, refresh: false, actualized: DateTime.now().toISO()});
+            this.serialize();
+        }
+        
     }
 
     removeItem(address){
+        this.deserialize();
         this.data = this.data.filter(e => e.address === address);
         this.serialize();
     }
 
-    updateItem(item){
+    updateItem(item, contribution){
+        this.deserialize();
         let index = this.data.findIndex(e => e.address === item.address)
-        this.data[index] = this.getLastActualization({ actualized: new DateTime().toISO(), ...item })
+        console.log(index, this.data[index], item.address)
+        if(!this.data[index].hasOwnProperty("contribution")){
+            this.data[index] = this.getLastActualization({ actualized: DateTime.now().toISO(), contribution, ...item, ...this.data[index] })
+        }else{
+            this.data[index] = this.getLastActualization({ actualized: DateTime.now().toISO(), ...item, ...this.data[index] })
+        }
+        
         this.serialize();
     }
 
     serialize() {
         localStorage.setItem("contracts", JSON.stringify(this.data))
+    }
+
+    purge(){
+        this.data = [];
+        this.serialize();
     }
 }

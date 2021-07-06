@@ -55,12 +55,17 @@ export const useContracts = initialContracts => {
         return setContracts(contracts => contracts && contracts.length > 0 ? contracts.filter(e => e.address === address) : [])
     }
 
+    const purgeContracts = () => {
+        setContracts([])
+    }
+
     return {
         contracts,
         addContract,
         setEntry,
         removeContract,
         findContract,
-        getContract
+        getContract,
+        purgeContracts
     };
 }

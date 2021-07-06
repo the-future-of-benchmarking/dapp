@@ -59,7 +59,7 @@ class App extends Component {
       const networkId = await web3.eth.net.getId();
       console.log(networkId)
 
-      this.setState({ web3, accounts, currentAccount: accounts[0], networkId, client:  new BenchmarkClient(accounts[0], web3)})
+      this.setState({ web3, accounts, currentAccount: accounts[0], networkId, client:  new BenchmarkClient(web3, accounts[0])})
 
       ethereum.on('chainChanged', this.handleChainChanged);
       ethereum.on('accountsChanged', this.handleAccountsChanged);

@@ -1,4 +1,6 @@
 import React from 'react';
+
+
 import { useContracts } from './participate/contracts-hook';
 
 export const withContracts = (Component) => {
