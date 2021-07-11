@@ -55,13 +55,12 @@ export class BenchmarkClient extends BlockChainInteractor {
         this.BenchMarkInstance = new this.web3.eth.Contract(benchmarkContract.abi, address);
         this.address = address
     }
-    async getDetails() {
-        const sync = new Synchronization();
-        const storageItem = sync.getItem(this.address)
+    async getDetails(force = false) {
+        const storageItem = await Synchronization.getItem(this.address)
 
-        console.log("needs refresg", storageItem.refresh)
+        console.log("needs refresg", storageItem)
 
-        if (!storageItem || storageItem.refresh) {
+        if (!storageItem || storageItem.refresh || force) {
             const account = await this.getAccounts();
             const result = await this.executewithGas(this.BenchMarkInstance.methods.benchmark(), account);
             console.log("Resalt", result)
@@ -79,10 +78,10 @@ export class BenchmarkClient extends BlockChainInteractor {
             response.unit = this.web3.utils.hexToUtf8(result.unit);
             response.address = this.BenchMarkInstance._address;
 
-            if (storageItem && storageItem.refresh === true) {
-                sync.updateItem(response)
+            if ((storageItem && storageItem.refresh === true) || force) {
+                await Synchronization.updateItem(response)
             } else {
-                sync.addItem(response)
+                await Synchronization.addItem(response)
             }
 
 
@@ -96,10 +95,9 @@ export class BenchmarkClient extends BlockChainInteractor {
     }
 
     async participate(value) {
-        const sync = new Synchronization();
         const account = await this.getAccounts();
         const response =  await this.executewithGas(this.BenchMarkInstance.methods.participate(this.web3.utils.toHex(toPrecision(value))), account, false);
-        sync.updateItem({contribution: value, address: this.address})
+        await Synchronization.updateItem({contribution: value, address: this.address})
         return response;
     }
 

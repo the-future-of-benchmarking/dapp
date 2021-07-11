@@ -1,6 +1,4 @@
-import { Card } from "primereact/card";
 import React, { Component } from "react";
-import { Chip } from 'primereact/chip';
 import { Toast } from 'primereact/toast';
 
 import { SavedContracts } from "./participate/SavedContracts";

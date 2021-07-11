@@ -1,77 +1,97 @@
+import localforage from "localforage";
 import { DateTime } from "luxon";
+
+const attributes = ["name", "description", "entries", "sum", "upper_bound", "lower_bound", "unit", "address", "contribution", "refresh", "actualized"]
+const timeOutMinutes = 10;
 export class Synchronization {
-    timeOutMinutes = 10;
-    data = [];
+    
 
     
 
-    constructor(){
-        this.deserialize();
-    }
-
-    needsActualization(item) {
+    static needsActualization(item) {
         if (item.actualized) {
             let actualized = DateTime.fromISO(item.actualized)
             let current = DateTime.now();
-            let refresh = current.diff(actualized, "minutes")["minutes"] > this.timeOutMinutes;
-            return { ...item, refresh}
+            let refresh = current.diff(actualized, "minutes")["minutes"] > timeOutMinutes;
+            return { ...item, refresh }
         } else {
-            return {  ...item, refresh: true}
+            return { ...item, refresh: true }
         }
     }
 
-    deserialize() {
-        const lData = localStorage.getItem("contracts")
-        this.data = JSON.parse(lData)
+    static async getAll() {
+        await localforage.ready();
+        const keys = await localforage.keys()
+        const entries = Array.from(new Set(keys.map(e => e.split('|')[0])))
+        const returnValues = entries.map(Synchronization.getItem)
+        console.log(returnValues, keys)
+        let all =  await Promise.all(returnValues)
+        return all;
     }
 
-    getItem(address){
-        this.deserialize();
-        let foundData = this.data.find(element => address === element.address)
-        if (foundData) {
-            return this.needsActualization(foundData)
+
+    static async getItem(address) {
+        await localforage.ready();
+        let data = await Promise.all(attributes.map(e => localforage.getItem(address + '|' + e)))
+        let foundData = {};
+
+        for (let i = 0; i < data.length; i++) {
+            const element = data[i];
+            foundData[attributes[i]] = element;
+        }
+        if (Object.keys(foundData).length > 1) {
+            return Synchronization.needsActualization(foundData)
         } else {
             return null;
         }
     }
 
-    addItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address}, contribution){
-        console.log({ name, description, entries, sum, upper_bound, lower_bound, unit, address}, contribution)
-        this.deserialize();
-        if(this.data.filter((el) => el.address === address).length < 1){
-            this.data.push({ name, description, entries, sum, upper_bound, lower_bound, unit, address, contribution, refresh: false, actualized: DateTime.now().toISO()});
-            this.serialize();
+    static async addItem(data, contribution) {
+        await localforage.ready();
+        console.log(data, contribution)
+
+        if (!await Synchronization.getItem(data.address)) {
+            for (let i = 0; i < attributes.length; i++) {
+                const key = attributes[i];
+
+                await localforage.setItem(data.address + '|' + key, data[key])
+            }
         }
-        
+
     }
 
-    removeItem(address){
-        this.deserialize();
-        this.data = this.data.filter(e => e.address === address);
-        this.serialize();
-    }
+    static async removeItem(address) {
+        await localforage.ready();
+        try {
+            for (let i = 0; i < attributes.length; i++) {
+                const key = attributes[i];
 
-    updateItem(item, contribution){
-        this.deserialize();
-        let index = this.data.findIndex(e => e.address === item.address)
+                await localforage.removeItem(address + '|' + key)
+            }
+        } catch (e) {
 
-        console.log({ ...this.data[index], ...item, actualized: DateTime.now().toISO() }, this.needsActualization({ ...this.data[index], ...item, actualized: DateTime.now().toISO()}))
-        if(this.data[index].hasOwnProperty("contribution")){
-            this.data[index] = this.needsActualization({ ...this.data[index], ...item, actualized: DateTime.now().toISO(), contribution  })
-        }else{
-            this.data[index] = this.needsActualization({ ...this.data[index], ...item, actualized: DateTime.now().toISO() })
         }
-        console.log(this.data[index])
+
+    }
+
+    static async updateItem(item) {
+        await localforage.ready();
+        const foundItem = await Synchronization.getItem(item.address)
+
+        let updateItem = Synchronization.needsActualization({ ...foundItem, ...item, actualized: DateTime.now().toISO() })
         
-        this.serialize();
+        
+        for (let i = 0; i < attributes.length; i++) {
+            const key = attributes[i];
+
+            await localforage.setItem(updateItem.address + '|' + key, updateItem[key])
+        }
     }
 
-    serialize() {
-        localStorage.setItem("contracts", JSON.stringify(this.data))
-    }
 
-    purge(){
-        this.data = [];
-        this.serialize();
+    static async purge() {
+        await localforage.ready();
+        await localforage.clear();
     }
 }
+

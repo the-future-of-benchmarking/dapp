@@ -4,22 +4,22 @@ const useContractState = createPersistedState('contracts');
 
 
 export const useContracts = initialContracts => {
-    const [contracts, setContracts] = useContractState(initialContracts);
+    /* const [contracts, setContracts] = useContractState(initialContracts);
 
     const addContract = async (entry, client) => {
-        if(findContract(entry.address) > -1){
+        if (findContract(entry.address) > -1) {
             setContracts(contracts => contracts && contracts.length > 0 ? [...contracts, entry] : [entry])
-        }else if(Web3.utils.isAddress(entry)){
+        } else if (Web3.utils.isAddress(entry)) {
             await client.startFromAddress(entry);
             console.log(entry, client)
             await client.provision(entry.name, entry.lowerBound, entry.upperBound, entry.unit, entry.description)
             const details = await client.getDetails();
             setContracts(contracts => contracts && contracts.length > 0 ? [...contracts, details] : [details])
-        }else{
+        } else {
             throw new Error("Invalid Address")
         }
         return contracts;
-        
+
     }
 
 
@@ -28,10 +28,10 @@ export const useContracts = initialContracts => {
     }
 
 
-    const getContract = async(searchAddress, client) => {
+    const getContract = async (searchAddress, client) => {
         let contract = contracts.find(({ address }) => searchAddress === address)
-        if(!contract){
-            	return await addContract(searchAddress, client)
+        if (!contract) {
+            return await addContract(searchAddress, client)
 
         }
         return contract;
@@ -67,5 +67,5 @@ export const useContracts = initialContracts => {
         findContract,
         getContract,
         purgeContracts
-    };
+    }; */
 }

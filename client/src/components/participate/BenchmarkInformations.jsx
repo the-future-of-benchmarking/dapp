@@ -2,17 +2,17 @@ import React, { useState } from "react"
 import { Card } from "primereact/card";
 import { Knob } from 'primereact/knob';
 import { Chip } from 'primereact/chip';
-import { useContracts } from "./contracts-hook";
+import { Synchronization } from "Synchronization";
+
 
 
 export const BenchmarkInformations = ({
     smartContractAddress,showError, details
 }) => {
-    const { getContract  } = useContracts([])
     const [contract, setContract] = useState(null);
     const [visible, setVisible] = useState(true);
 
-    getContract(smartContractAddress).then(el => setContract(el))
+    Synchronization.getItem(smartContractAddress).then(el => setContract(el))
     
     if(!contract){
         return(<p>Loading...</p>)

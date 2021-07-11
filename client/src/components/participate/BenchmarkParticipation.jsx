@@ -2,7 +2,6 @@ import { Card } from "primereact/card";
 import React, { useEffect, useState } from "react";
 import { InputNumber } from 'primereact/inputnumber';
 import { BenchmarkResult } from "./BenchmarkResult";
-import { useContracts } from "./contracts-hook";
 import { Button } from "primereact/button";
 import { BenchmarkClient } from "BenchmarkClient";
 import { Synchronization } from "Synchronization";
@@ -14,19 +13,17 @@ export const BenchmarkParticipation = ({
     showError,
     web3
 }) => {
-    const { setEntry, getContract } = useContracts([])
     const [entryInput, setEntryInput] = useState(0);
     const [contract, setContract] = useState(null);
 
     useEffect(() => {
-        getContract(smartContractAddress).then(el => setContract(el))
-    });
+        Synchronization.getItem(smartContractAddress).then(el => setContract(el))
+    }, [smartContractAddress]);
 
     
 
     let submit = async (address, input) => {
         try {
-            const sync = new Synchronization();
             const client = new BenchmarkClient(web3, address);
             await client.participate(input)
             const details = await client.getDetails()
@@ -34,7 +31,9 @@ export const BenchmarkParticipation = ({
             //await client.participate(input)
             //setEntry(address, input)
             //sync.addItem(details, input)
-            sync.updateItem(details, input)
+            await Synchronization.updateItem({...details, contribution: input}) 
+            const contract = await Synchronization.getItem(smartContractAddress)
+            setContract(contract)
         } catch (e) {
             /* if (e.message.includes("Internal JSON-RPC")) {
 
@@ -53,7 +52,7 @@ export const BenchmarkParticipation = ({
 
             } */
 
-            showError(BenchmarkClient.decodeErrorMessage(e.message))
+            showError(BenchmarkClient.decodeErrorMessage(e))
         }
 
     }

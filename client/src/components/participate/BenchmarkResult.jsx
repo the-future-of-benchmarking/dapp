@@ -5,7 +5,6 @@ import { Chip } from 'primereact/chip';
 import { Rating } from 'primereact/rating';
 import { BenchmarkClient } from "BenchmarkClient";
 import { Synchronization } from "Synchronization";
-import { Toast } from "primereact/toast";
 import { Message } from 'primereact/message';
 import { Button } from "primereact/button";
 import { DateTime } from "luxon";
@@ -43,12 +42,12 @@ export const BenchmarkResultO = ({
 
 
 
-    const caverage = <p>&empty; {average / participants} {unit}</p>
+    const caverage = <p>&empty; {average} {unit}</p>
     const ownEntry = <p>Eigener Eintrag (lokal zwischengespeichert): {entry}</p>
-    const difference = <p>Differenz: {entry > (numAverage) ? "+" : "-"} {Math.abs(numAverage - entry)}</p>
+    const difference = <p>Differenz: {entry > (average) ? "+" : "-"} {Math.abs(average - entry)}</p>
 
     const bestRating = <><Rating value={ratingValue} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am Durchschnitt)</>
-    const averageRating = <><Rating value={bestInClass} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am "besten Wert)</>
+    const averageRating = <><Rating value={bestInClass} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am besten Wert)</>
 
 
     return (
@@ -83,24 +82,24 @@ export class BenchmarkResult extends Component {
     }
 
     componentDidMount(){
-        const sync = new Synchronization();
-        const {actualized} = sync.getItem(this.props.smartContractAddress)
-        this.setState({lastRefresh: actualized})
+        Synchronization.getItem(this.props.smartContractAddress).then(({actualized}) => this.setState({lastRefresh: actualized}))
+        
     }
 
     requestResults = async () => {
 
         try {
             const client = new BenchmarkClient(this.props.web3, this.props.smartContractAddress)
-            const sync = new Synchronization()
-            const details = await client.getDetails()
-            console.log("Detz", details)
-            const { best, average, averageRated } = await client.getResults(sync.getItem(this.props.smartContractAddress).contribution);
+            const details = await client.getDetails(true)
+            const item = await Synchronization.getItem(this.props.smartContractAddress)
+            console.log("Detz", details, item)
 
-            const {actualized, unit, contribution} = sync.getItem(this.props.smartContractAddress)
+            const { best, average, averageRated } = await client.getResults(item.contribution);
+
+            const {actualized, unit, contribution} = await Synchronization.getItem(this.props.smartContractAddress)
 
             this.setState({ best, average, averageRated, lastRefresh: actualized, errorMessage: "", unit, participants: details.entries, entry:contribution })
-            sync.updateItem({ best, average, averageRated, ...details })
+            await Synchronization.updateItem({ best, average, averageRated, ...details })
         } catch (e) {
             const msg = BenchmarkClient.decodeErrorMessage(e)
             console.error(msg)
@@ -123,7 +122,6 @@ export class BenchmarkResult extends Component {
             {this.state.errorMessage ? <Message severity="error" text={this.state.errorMessage} /> : ""}
             <p>Letzte Aktualisierung: {DateTime.fromISO(this.state.lastRefresh).toLocaleString(DateTime.DATETIME_MED)}</p>
             <Button label="Ergebnisse laden" onClick={() => this.requestResults()} />
-            <p>{this.state.best},{this.state.average},{this.state.averageRated}</p>
             {this.state.best && this.state.average && this.state.averageRated && !this.state.errorMessage && <BenchmarkResultO average={this.state.average} unit={this.state.unit} participants={this.state.participants} entry={this.state.entry} bestInClass={this.state.best} ratingValue={this.state.averageRated} />}
         </Card>)
         /*

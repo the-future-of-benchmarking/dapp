@@ -12,7 +12,7 @@ import { Toast } from "primereact/toast";
 import { Field, Form } from "react-final-form";
 import "./BenchmarkCreation.css"
 import { Synchronization } from "Synchronization";
-import { BenchmarkClient, BenchmarkFactory } from "BenchmarkClient";
+import { BenchmarkFactory } from "BenchmarkClient";
 
 class BenchmarkCreationScreenComponent extends Component {
 
@@ -83,13 +83,12 @@ class BenchmarkCreationScreenComponent extends Component {
     async onSubmit(data, form) {
         console.log(data)
         try {
-            const storage = new Synchronization()
             const factory = new BenchmarkFactory(this.props.web3)
             const client = await factory.provision(data.name, data.lowerBound, data.upperBound, data.unit, data.description)
 
             const returnedDetails = await client.getDetails()
 
-            storage.addItem({best: null, average: null, averageRated: null, ...returnedDetails})
+            await Synchronization.addItem({best: null, average: null, averageRated: null, ...returnedDetails})
 
             this.setState({ submitted: true })
             this.showSuccess("Angelegt")

@@ -1,4 +1,4 @@
-import React, { useState, Component } from "react"
+import React, { useState, Component, useEffect } from "react"
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { InputText } from 'primereact/inputtext';
@@ -6,7 +6,6 @@ import { Chip } from 'primereact/chip';
 import Web3 from 'web3';
 import { BenchmarkClient, BenchmarkFactory } from "BenchmarkClient";
 import { Synchronization } from "Synchronization";
-import { useContracts } from "./contracts-hook";
 
 
 class AddContractComponent extends Component {
@@ -27,11 +26,10 @@ class AddContractComponent extends Component {
         } else {
 
             try {
-                const storage = new Synchronization()
                 const client = new BenchmarkClient(this.props.web3, inputAddress)
-                if (!storage.getItem(inputAddress)) {
+                if (!await Synchronization.getItem(inputAddress)) {
                     const { name, description, entries, sum, upper_bound, lower_bound, unit } = await client.getDetails()
-                    storage.addItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address: inputAddress })
+                    await Synchronization.addItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address: inputAddress })
                     this.setState({ contractInput: "" })
                 } else {
                     this.setState({ contractInput: "" })
@@ -61,23 +59,30 @@ class AddContractComponent extends Component {
 
 
 export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, showError }) => {
-    const { contracts, purgeContracts } = useContracts([])
     const [visible, setVisible] = useState(true)
+    const [filteredContracts, setContracts] = useState([])
 
-    const emptyStorage = () => {
-        const sync = new Synchronization();
-        sync.purge()
-        purgeContracts();
+    const emptyStorage = async () => {
+        await Synchronization.purge()
+        setContracts([])
     }
 
-    let filteredContracts = Array.from(new Set(contracts.filter(contract => web3.utils.isAddress(contract.address))))
 
     let preLoadBenchmark = async (address) => {
         await loadBenchmark(address);
         setVisible(!visible)
     }
 
-    return (
+    useEffect(() => {
+        Synchronization.getAll().then(el => {
+            console.log("a", el)
+            setContracts(el)})
+    }, []);
+
+    
+
+
+        return (
 
         <Card title="Gespeicherte Smart Contracts" className="p-mb-4 p-mt-4">
             <div className="p-mb-4">
@@ -86,7 +91,7 @@ export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, show
             {visible ? <>
                 <div className="p-grid p-dir-col">
 
-                    {filteredContracts.length == 0 ? "No entries (add existing contracts via the form below or create one)" : filteredContracts && filteredContracts.map(contract => (<div className="p-col" style={{ cursor: "pointer" }} key={contract.address} onClick={() => preLoadBenchmark(contract.address)}>
+                    {filteredContracts.length === 0 ? "No entries (add existing contracts via the form below or create one)" : filteredContracts && filteredContracts.map(contract => (<div className="p-col" style={{ cursor: "pointer" }} key={contract.address} onClick={() => preLoadBenchmark(contract.address)}>
                         <Chip template={<>{contract.name} - {contract.address}</>} style={{ backgroundColor: (smartContractAddress === contract.address ? "#00BCD4" : ""), color: (smartContractAddress === contract.address ? "white" : "") }} />
                     </div>))
                     }
@@ -97,7 +102,10 @@ export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, show
                 <Button label="Delete" icon="pi pi-trash" className="p-button-danger p-mt-3" onClick={() => emptyStorage()} />
             </>
                 : ""}
-        </Card>
+        </Card>)
 
-    )
+    
+    
+
+    
 }

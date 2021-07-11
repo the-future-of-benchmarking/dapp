@@ -3,7 +3,7 @@ import React from 'react';
 
 import { useContracts } from './participate/contracts-hook';
 
-export const withContracts = (Component) => {
+/* export const withContracts = (Component) => {
   return (props) => {
     const {
         contracts,
@@ -16,4 +16,4 @@ export const withContracts = (Component) => {
 
     return <Component contracts={contracts} addContract={addContract} setEntry={setEntry} removeContract={removeContract} findContract={findContract} getContract={getContract} {...props} />;
   };
-};
+}; */
