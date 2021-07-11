@@ -3,19 +3,20 @@ export class Synchronization {
     timeOutMinutes = 10;
     data = [];
 
+    
+
     constructor(){
         this.deserialize();
     }
 
-    getLastActualization(item) {
-        this.deserialize();
+    needsActualization(item) {
         if (item.actualized) {
             let actualized = DateTime.fromISO(item.actualized)
             let current = DateTime.now();
             let refresh = current.diff(actualized, "minutes")["minutes"] > this.timeOutMinutes;
-            return { refresh, ...item }
+            return { ...item, refresh}
         } else {
-            return { refresh: true, ...item }
+            return {  ...item, refresh: true}
         }
     }
 
@@ -28,7 +29,7 @@ export class Synchronization {
         this.deserialize();
         let foundData = this.data.find(element => address === element.address)
         if (foundData) {
-            return this.getLastActualization(foundData)
+            return this.needsActualization(foundData)
         } else {
             return null;
         }
@@ -53,12 +54,14 @@ export class Synchronization {
     updateItem(item, contribution){
         this.deserialize();
         let index = this.data.findIndex(e => e.address === item.address)
-        console.log(index, this.data[index], item.address)
-        if(!this.data[index].hasOwnProperty("contribution")){
-            this.data[index] = this.getLastActualization({ actualized: DateTime.now().toISO(), contribution, ...item, ...this.data[index] })
+
+        console.log({ ...this.data[index], ...item, actualized: DateTime.now().toISO() }, this.needsActualization({ ...this.data[index], ...item, actualized: DateTime.now().toISO()}))
+        if(this.data[index].hasOwnProperty("contribution")){
+            this.data[index] = this.needsActualization({ ...this.data[index], ...item, actualized: DateTime.now().toISO(), contribution  })
         }else{
-            this.data[index] = this.getLastActualization({ actualized: DateTime.now().toISO(), ...item, ...this.data[index] })
+            this.data[index] = this.needsActualization({ ...this.data[index], ...item, actualized: DateTime.now().toISO() })
         }
+        console.log(this.data[index])
         
         this.serialize();
     }

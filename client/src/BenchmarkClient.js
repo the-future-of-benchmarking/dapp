@@ -35,10 +35,11 @@ export class BenchmarkFactory extends BlockChainInteractor {
         if (!benchmarkName || !lowerBound || !upperBound || !benchmarkUnit || !desc) {
             throw new Error("Required parameters missing")
         }
+        console.log(benchmarkName, lowerBound, upperBound, benchmarkUnit, desc)
         const BenchMark = new this.web3.eth.Contract(benchmarkContract.abi);
         let deployerFn = await BenchMark.deploy({
             data: benchmarkContract.bytecode,
-            arguments: [this.toWeirdString(benchmarkName), this.web3.utils.toHex(lowerBound), this.web3.utils.toHex(upperBound), this.toWeirdString(benchmarkUnit), this.toWeirdString(desc)],
+            arguments: [this.toWeirdString(benchmarkName), this.web3.utils.toHex(toPrecision(lowerBound)), this.web3.utils.toHex(toPrecision(upperBound)), this.toWeirdString(benchmarkUnit), this.toWeirdString(desc)],
         });
         const account = await this.getAccounts();
         let returnValue = await this.executewithGas(deployerFn, account, false);
@@ -58,9 +59,12 @@ export class BenchmarkClient extends BlockChainInteractor {
         const sync = new Synchronization();
         const storageItem = sync.getItem(this.address)
 
+        console.log("needs refresg", storageItem.refresh)
+
         if (!storageItem || storageItem.refresh) {
             const account = await this.getAccounts();
             const result = await this.executewithGas(this.BenchMarkInstance.methods.benchmark(), account);
+            console.log("Resalt", result)
             let response = { name: null, description: null, entries: null, sum: null, upper_bound: null, lower_bound: null, unit: null, address: null };
             response.name = this.web3.utils.hexToUtf8(result.name);
             response.description = this.web3.utils.hexToUtf8(result.description)
@@ -105,7 +109,7 @@ export class BenchmarkClient extends BlockChainInteractor {
         let best = await this.executewithGas(this.BenchMarkInstance.methods.bestRating(contribution), account);
         let average = await this.executewithGas(this.BenchMarkInstance.methods.average(), account);
         let averageRated = await this.executewithGas(this.BenchMarkInstance.methods.averageRating(contribution), account);
-        return { best, average: fromPrecision(average), averageRated };
+        return { best: parseInt(best), average: fromPrecision(average), averageRated: parseInt(averageRated) };
         
     }
 

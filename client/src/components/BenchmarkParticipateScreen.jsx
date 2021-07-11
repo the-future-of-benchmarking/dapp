@@ -72,9 +72,9 @@ export class ParticipateScreenComponent extends Component {
             <div className="p-col-5">
                 <Toast ref={this.toast} />
 
-                <Card title="Aktuelle Adresse" className="p-mb-4">
+                {/* <Card title="Aktuelle Adresse" className="p-mb-4">
                     <Chip template={this.props.currentAccount} />
-                </Card>
+                </Card> */}
 
                 <SavedContracts loadBenchmark={this.loadBenchmark} smartContractAddress={this.state.smartContractAddress} showError={this.showError} web3={this.props.web3} />
 

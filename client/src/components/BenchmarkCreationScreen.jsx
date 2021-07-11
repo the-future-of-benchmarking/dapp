@@ -89,7 +89,7 @@ class BenchmarkCreationScreenComponent extends Component {
 
             const returnedDetails = await client.getDetails()
 
-            storage.addItem(returnedDetails)
+            storage.addItem({best: null, average: null, averageRated: null, ...returnedDetails})
 
             this.setState({ submitted: true })
             this.showSuccess("Angelegt")

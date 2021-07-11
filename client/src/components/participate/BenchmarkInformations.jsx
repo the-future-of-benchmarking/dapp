@@ -10,6 +10,7 @@ export const BenchmarkInformations = ({
 }) => {
     const { getContract  } = useContracts([])
     const [contract, setContract] = useState(null);
+    const [visible, setVisible] = useState(true);
 
     getContract(smartContractAddress).then(el => setContract(el))
     
@@ -18,7 +19,11 @@ export const BenchmarkInformations = ({
     }else{
 
     return(
-    <Card title="Benchmark Informationen" className="p-mb-4 p-mt-4">
+    <Card title="Benchmark Informationen" className="p-mb-4 p-mt-4" >
+            <div className="p-mb-4">
+            {visible ? <i className="pi pi-angle-up" onClick={() => setVisible(!visible)} style={{ cursor: "pointer" }} /> : <i className="pi pi-angle-down" onClick={() => setVisible(!visible)} style={{ cursor: "pointer" }} />}
+            </div>
+            {visible ?
                     <div className="p-grid">
                     {!smartContractAddress ? <div className="p-col-12">SmartContract nicht geladen, bitte oben selektieren</div>: <>
 
@@ -70,16 +75,18 @@ export const BenchmarkInformations = ({
                         {!contract.lower_bound || !contract.upper_bound ?
                             <div className="p-col-8"><p>Nicht gesetzt</p></div> : <>
                                 <div className="p-col-4">
-                                    <Knob value={contract.lower_bound} min={contract.lower_bound >= 0 ? contract.lower_bound : 0} max={contract.lower_bound < 0 ? 0 : contract.upper_bound} readOnly />
+                                    <Knob value={contract.lower_bound} min={contract.lower_bound >= 0 ? contract.lower_bound : 0} max={contract.lower_bound < 0 ? 0 : contract.upper_bound} readOnly showValue={contract.upper_bound.toString().length < 5 && contract.lower_bound.toString().length < 5} />
+                                    {contract.upper_bound.toString().length > 5 || contract.lower_bound.toString().length > 5 ? contract.lower_bound : ""}
                                 </div>
                                 <div className="p-col-4">
-                                    <Knob value={contract.upper_bound} min={contract.lower_bound >= 0 ? contract.lower_bound : 0} max={contract.upper_bound} readOnly />
+                                    <Knob value={contract.upper_bound} min={contract.lower_bound >= 0 ? contract.lower_bound : 0} max={contract.upper_bound} readOnly showValue={contract.upper_bound.toString().length < 5 && contract.lower_bound.toString().length < 5} />
+                                    {contract.upper_bound.toString().length > 5 || contract.lower_bound.toString().length > 5 ? contract.upper_bound : ""}
                                 </div>
                             </>
                         }
                         </>}
 
-                    </div>
+                    </div> : ""}
                 </Card>)
     }
 }

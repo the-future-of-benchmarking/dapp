@@ -1,6 +1,6 @@
 # Simple Benchmarking Contract
 Illustrates a pretty basic benchmarking contract.
-Beware of the inbuilt 5 digit prezition behind the comma when calculating the average.
+
 
 The contract uses an upper and lower bound to validate the entry. Additionally the deploying party may choose an unit (i.e. Mio. €).
 The benchmarkees are deduplicated (one entry per benchmarkee).

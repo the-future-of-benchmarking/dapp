@@ -33,9 +33,10 @@ export const BenchmarkParticipation = ({
             //await client.startFromAddress(address)
             //await client.participate(input)
             //setEntry(address, input)
-            sync.addItem(details, input)
+            //sync.addItem(details, input)
+            sync.updateItem(details, input)
         } catch (e) {
-            if (e.message.includes("Internal JSON-RPC")) {
+            /* if (e.message.includes("Internal JSON-RPC")) {
 
                 if (e.message.includes("VM Exception while processing transaction: revert")) {
                     let a = e.message.replace("VM Exception while processing transaction: revert", "Smart Contract Fehler:")
@@ -50,12 +51,13 @@ export const BenchmarkParticipation = ({
                     return;
                 }
 
-            }
+            } */
 
-            showError(e.message)
+            showError(BenchmarkClient.decodeErrorMessage(e.message))
         }
 
     }
+    console.log(contract)
 
     if (!contract) {
         return (<p>Loading...</p>)
@@ -76,7 +78,15 @@ export const BenchmarkParticipation = ({
                 </Card>
                 <div className="p-col-12">
                     {typeof contract.contribution === "number" ?
-                        <BenchmarkResult smartContractAddress={smartContractAddress} smartContractParticipants={contract.participants} smartContractResult={contract.result} smartContractUnit={contract.unit} smartContractEntry={contract.contribution} bestInClass={contract.bestInClass} ratingValue={contract.rating} web3={web3} /> :
+                        <BenchmarkResult 
+                        smartContractAddress={smartContractAddress} 
+                        smartContractParticipants={contract.participants} 
+                        smartContractResult={contract.result} 
+                        smartContractUnit={contract.unit} 
+                        smartContractEntry={contract.contribution} 
+                        bestInClass={contract.bestInClass} 
+                        ratingValue={contract.rating} 
+                        web3={web3} /> :
                         ""
                     }
                 </div>

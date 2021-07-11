@@ -14,7 +14,7 @@ class AddContractComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            contractInput: ""
+            contractInput: "",
         }
         this.factory = new BenchmarkFactory(props.web3)
         this.addContract = this.addContract.bind(this)
@@ -29,14 +29,14 @@ class AddContractComponent extends Component {
             try {
                 const storage = new Synchronization()
                 const client = new BenchmarkClient(this.props.web3, inputAddress)
-                if(!storage.getItem(inputAddress)){
+                if (!storage.getItem(inputAddress)) {
                     const { name, description, entries, sum, upper_bound, lower_bound, unit } = await client.getDetails()
                     storage.addItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address: inputAddress })
                     this.setState({ contractInput: "" })
-                }else{
+                } else {
                     this.setState({ contractInput: "" })
                 }
-                
+
             } catch (e) {
                 this.props.showError("Adresse konnte nicht gefunden werden")
                 this.setState({ contractInput: "" })
@@ -62,6 +62,7 @@ class AddContractComponent extends Component {
 
 export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, showError }) => {
     const { contracts, purgeContracts } = useContracts([])
+    const [visible, setVisible] = useState(true)
 
     const emptyStorage = () => {
         const sync = new Synchronization();
@@ -71,17 +72,32 @@ export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, show
 
     let filteredContracts = Array.from(new Set(contracts.filter(contract => web3.utils.isAddress(contract.address))))
 
+    let preLoadBenchmark = async (address) => {
+        await loadBenchmark(address);
+        setVisible(!visible)
+    }
+
     return (
+
         <Card title="Gespeicherte Smart Contracts" className="p-mb-4 p-mt-4">
-            <div className="p-grid p-dir-col">
-                {filteredContracts && filteredContracts.map(contract => (<div className="p-col" style={{ cursor: "pointer" }} key={contract.address} onClick={() => loadBenchmark(contract.address)}>
-                    <Chip template={<>{contract.name} - {contract.address}</>} style={{ backgroundColor: (smartContractAddress === contract.address ? "#00BCD4" : ""), color: (smartContractAddress === contract.address ? "white" : "") }} />
-                </div>))}
+            <div className="p-mb-4">
+            {visible ? <i className="pi pi-angle-up" onClick={() => setVisible(!visible)} style={{ cursor: "pointer" }} /> : <i className="pi pi-angle-down" onClick={() => setVisible(!visible)} style={{ cursor: "pointer" }} />}
             </div>
+            {visible ? <>
+                <div className="p-grid p-dir-col">
+
+                    {filteredContracts.length == 0 ? "No entries (add existing contracts via the form below or create one)" : filteredContracts && filteredContracts.map(contract => (<div className="p-col" style={{ cursor: "pointer" }} key={contract.address} onClick={() => preLoadBenchmark(contract.address)}>
+                        <Chip template={<>{contract.name} - {contract.address}</>} style={{ backgroundColor: (smartContractAddress === contract.address ? "#00BCD4" : ""), color: (smartContractAddress === contract.address ? "white" : "") }} />
+                    </div>))
+                    }
+                </div>
 
 
-            <AddContractComponent loadBenchmark={loadBenchmark} smartContractAddress={smartContractAddress} web3={web3} showError={showError} />
-            <Button label="Delete" icon="pi pi-trash" className="p-button-danger p-mt-3" onClick={() => emptyStorage()}/>
+                <AddContractComponent loadBenchmark={loadBenchmark} smartContractAddress={smartContractAddress} web3={web3} showError={showError} />
+                <Button label="Delete" icon="pi pi-trash" className="p-button-danger p-mt-3" onClick={() => emptyStorage()} />
+            </>
+                : ""}
         </Card>
+
     )
 }

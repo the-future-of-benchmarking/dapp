@@ -47,8 +47,8 @@ contract BenchMark {
     ) {
         initiator = msg.sender;
 
-        require(upperBound >= 0, "Value mismatch");
-        require(lowerBound >= 0, "Value mismatch");
+        require(upperBound >= 0, "Upperbound has to be grater than zero");
+        require(lowerBound >= 0, "Lowerbound has to be grater than zero");
 
         uint256 zero = 0;
 
@@ -56,8 +56,8 @@ contract BenchMark {
             name: benchmarkName,
             entries: 0,
             sum: zero.fromUint(),
-            upper_bound: upperBound.fromUint(),
-            lower_bound: lowerBound.fromUint(),
+            upper_bound: upperBound,
+            lower_bound: lowerBound,
             unit: benchmarkUnit,
             description: benchmarkDescription
         });
