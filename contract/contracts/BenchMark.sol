@@ -35,7 +35,6 @@ contract BenchMark {
 
     event AggregateReady(bytes32 indexed benchmarkName, uint256 entryCount);
 
-    
 
     /// Create a new ballot to choose one of `proposalNames`.
     constructor(
@@ -47,8 +46,8 @@ contract BenchMark {
     ) {
         initiator = msg.sender;
 
-        require(upperBound >= 0, "Upperbound has to be grater than zero");
-        require(lowerBound >= 0, "Lowerbound has to be grater than zero");
+        require(upperBound >= 0, "Upperbound has to be greater than zero");
+        require(lowerBound >= 0, "Lowerbound has to be greater than zero");
 
         uint256 zero = 0;
 

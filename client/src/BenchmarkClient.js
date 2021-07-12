@@ -90,8 +90,10 @@ export class BenchmarkClient extends BlockChainInteractor {
             return storageItem;
         }
 
+    }
 
-
+    getEmitter(){
+        return this.BenchMarkInstance.events.AggregateReady()
     }
 
     async participate(value) {
@@ -102,11 +104,11 @@ export class BenchmarkClient extends BlockChainInteractor {
     }
 
     async getResults(contribution) {
-        console.log(contribution)
+        const internalContribution = toPrecision(contribution)
         const account = await this.getAccounts();
-        let best = await this.executewithGas(this.BenchMarkInstance.methods.bestRating(contribution), account);
+        let best = await this.executewithGas(this.BenchMarkInstance.methods.bestRating(internalContribution), account);
         let average = await this.executewithGas(this.BenchMarkInstance.methods.average(), account);
-        let averageRated = await this.executewithGas(this.BenchMarkInstance.methods.averageRating(contribution), account);
+        let averageRated = await this.executewithGas(this.BenchMarkInstance.methods.averageRating(internalContribution), account);
         return { best: parseInt(best), average: fromPrecision(average), averageRated: parseInt(averageRated) };
         
     }

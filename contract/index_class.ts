@@ -8,6 +8,7 @@ async function main() {
 
     const web3 = new Web3(provider);
     let accounts = await web3.eth.getAccounts();
+    console.log(accounts)
 
     let instance = new BenchmarkInteractions(accounts[0], provider)
 
@@ -15,9 +16,10 @@ async function main() {
     let sum = [];
 
     // await instance.start("test", 1, 50, "Mio. EUR");
-    await instance.startFromAddress("0x7bCa01D700fA13E54E1ce3bd7191fd699c53185B")
+    await instance.startFromAddress("0x13aeC93638178266e07b02BC24F177BFa265389e")
 
     let nuAccounts = accounts.map((acc: any) => ({ account: acc, contribution: toPrecision((Math.random() * 48) + 1) }))
+
     for (let { account, contribution } of nuAccounts) {
 
         sum.push(contribution)
@@ -25,21 +27,28 @@ async function main() {
         try {
             instance.account= account;
             let p = await instance.participate(contribution)
-            console.log(p)
-            let r = await instance.getResults(contribution)
-            console.log("Result", account, r)
-            return;
+            console.log(account)
 
         } catch (e) {
             console.error(e)
-            let localSum = sum.reduce((accumulator, currentValue) => accumulator + currentValue) / sum.length
+            let localSum = +fromPrecision(sum.reduce((accumulator, currentValue) => accumulator + currentValue)) / sum.length
             console.error("ERROR", "Account", account, "Local Sum", localSum);
         }
+
+        /* try {
+            instance.account= account;
+            let r = await instance.getResults(contribution)
+            // console.log("Result", account, r)
+            return;
+
+        } catch (e) {
+            // console.error(e)
+        } */
 
     }
 
     //@ts-ignore
-    let localSum = fromPrecision(sum.reduce((accumulator, currentValue) => accumulator + currentValue)) / sum.length
+    let localSum = +fromPrecision(sum.reduce((accumulator, currentValue) => accumulator + currentValue)) / sum.length
     console.log("Local Average", localSum)
 
 }

@@ -1,6 +1,5 @@
 import React, { Component } from "react"
 import { Card } from "primereact/card";
-import { Chart } from 'primereact/chart';
 import { Chip } from 'primereact/chip';
 import { Rating } from 'primereact/rating';
 import { BenchmarkClient } from "BenchmarkClient";
@@ -9,6 +8,7 @@ import { Message } from 'primereact/message';
 import { Button } from "primereact/button";
 import { DateTime } from "luxon";
 import scale from './scale.jpeg';
+import { Toast } from "primereact/toast";
 
 
 
@@ -20,29 +20,6 @@ export const BenchmarkResultO = ({
     bestInClass,
     ratingValue,
 }) => {
-    const numAverage = average / participants
-    const chartData = {
-        labels: ['Eigener Eintrag'].concat(new Array(participants).fill().map((el, i) => `${i + 1} (Schnitt)`)),
-        datasets: [
-            {
-                data: [entry].concat(new Array(participants).fill().map(el => (numAverage * participants + 1) / participants)),
-                backgroundColor: ["#FF6384"].concat(new Array(participants).fill().map((el, i) => "#36A2EB")),
-                hoverBackgroundColor: ["#FF6384"].concat(new Array(participants).fill().map((el, i) => "#36A2EB")),
-            }]
-    };
-
-    const lightOptions = {
-        plugins: {
-            legend: {
-                labels: {
-                    color: '#495057'
-                }
-            }
-        }
-    };
-
-
-
     const caverage = <p>&empty; {average} {unit}</p>
     const ownEntry = <p>Eigener Eintrag (lokal zwischengespeichert): {entry}</p>
     const difference = <p>Differenz: {entry > (average) ? "+" : "-"} {Math.abs(average - entry)}</p>
@@ -58,7 +35,7 @@ export const BenchmarkResultO = ({
             <div className="p-grid">
                     <div className="p-col-5">
                         {/* <Chart type="doughnut" data={chartData} options={lightOptions} /> */}
-                        <img src={scale} alt="Logo" />
+                        <img src={scale} alt="Skala" />
                     </div>
                     <div className="p-col-7">
                         <div className="p-grid p-dir-col">
@@ -83,25 +60,43 @@ export const BenchmarkResultO = ({
 
 
 export class BenchmarkResult extends Component {
+    eventEmitter;
+    client;
     constructor(props) {
         super(props);
         this.state = { best: null, average: null, averageRated: null, lastRefresh: null }
+        this.client = new BenchmarkClient(this.props.web3, this.props.smartContractAddress)
+        this.requestResults = this.requestResults.bind(this)
+        this.toast = React.createRef();
+        this.showInfo = this.showInfo.bind(this)
     }
 
     componentDidMount(){
         Synchronization.getItem(this.props.smartContractAddress).then(({actualized}) => this.setState({lastRefresh: actualized}))
-        
+        this.eventEmitter = this.client.getEmitter();
+        // this.eventEmitter.on("data", console.log)
+        this.eventEmitter.on('data', (event) =>{
+            this.requestResults()
+            this.showInfo("New Results available")
+        })
+    }
+
+    componentWillUnmount(){
+        this.eventEmitter = null;
+    }
+
+    showInfo = (message) => {
+        this.toast.current.show({ severity: 'info', summary: 'Info', detail: message, life: 5000 })
     }
 
     requestResults = async () => {
 
         try {
-            const client = new BenchmarkClient(this.props.web3, this.props.smartContractAddress)
-            const details = await client.getDetails(true)
+            const details = await this.client.getDetails(true)
             const item = await Synchronization.getItem(this.props.smartContractAddress)
             console.log("Detz", details, item)
 
-            const { best, average, averageRated } = await client.getResults(item.contribution);
+            const { best, average, averageRated } = await this.client.getResults(item.contribution);
 
             const {actualized, unit, contribution} = await Synchronization.getItem(this.props.smartContractAddress)
 
@@ -126,6 +121,7 @@ export class BenchmarkResult extends Component {
     render() {
 
         return (<Card title="Ergebnisse" subTitle={"Letzte Aktualisierung: "+DateTime.fromISO(this.state.lastRefresh).toLocaleString(DateTime.DATETIME_MED)}>
+            <Toast ref={this.toast} />
             {this.state.errorMessage ? <Message severity="error" text={this.state.errorMessage} /> : ""}
             <Button label="Ergebnisse laden" onClick={() => this.requestResults()} />
             {this.state.best && this.state.average && this.state.averageRated && !this.state.errorMessage && <BenchmarkResultO average={this.state.average} unit={this.state.unit} participants={this.state.participants} entry={this.state.entry} bestInClass={this.state.best} ratingValue={this.state.averageRated} />}
@@ -135,7 +131,7 @@ export class BenchmarkResult extends Component {
             return <Card title="Ergebnisse"><Message severity="error" text={this.state.errorMessage} /></Card>
         }else{
           if(!this.state.best||!this.state.average||!this.state.averageRated){
-            return <><Toast ref={this.toast} /><p>Loading...</p></>
+            return 
         }
             return <><Toast ref={this.toast} /><p>{this.state.best},{this.state.average},{this.state.averageRated}</p></>
         
