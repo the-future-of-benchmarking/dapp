@@ -122,7 +122,7 @@ export class BenchmarkResult extends Component {
 
         return (<Card title="Ergebnisse" subTitle={"Letzte Aktualisierung: "+DateTime.fromISO(this.state.lastRefresh).toLocaleString(DateTime.DATETIME_MED)}>
             <Toast ref={this.toast} />
-            {this.state.errorMessage ? <Message severity="error" text={this.state.errorMessage} /> : ""}
+            {this.state.errorMessage ? <Message severity="error" text={this.state.errorMessage} className="p-mb-3"/> : ""}
             <Button label="Ergebnisse laden" onClick={() => this.requestResults()} />
             {this.state.best && this.state.average && this.state.averageRated && !this.state.errorMessage && <BenchmarkResultO average={this.state.average} unit={this.state.unit} participants={this.state.participants} entry={this.state.entry} bestInClass={this.state.best} ratingValue={this.state.averageRated} />}
         </Card>)

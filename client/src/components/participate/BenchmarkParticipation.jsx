@@ -27,30 +27,10 @@ export const BenchmarkParticipation = ({
             const client = new BenchmarkClient(web3, address);
             await client.participate(input)
             const details = await client.getDetails()
-            //await client.startFromAddress(address)
-            //await client.participate(input)
-            //setEntry(address, input)
-            //sync.addItem(details, input)
             await Synchronization.updateItem({...details, contribution: input}) 
             const contract = await Synchronization.getItem(smartContractAddress)
             setContract(contract)
         } catch (e) {
-            /* if (e.message.includes("Internal JSON-RPC")) {
-
-                if (e.message.includes("VM Exception while processing transaction: revert")) {
-                    let a = e.message.replace("VM Exception while processing transaction: revert", "Smart Contract Fehler:")
-                    let msg = JSON.parse(a.substring(25)).message
-                    console.log("Nachricht", msg)
-                    showError(msg);
-                    return;
-                } else {
-                    let msg = JSON.parse(e.message.substring(25)).message
-                    console.log("Nachricht", msg)
-                    showError(msg);
-                    return;
-                }
-
-            } */
 
             showError(BenchmarkClient.decodeErrorMessage(e))
         }
@@ -69,7 +49,11 @@ export const BenchmarkParticipation = ({
 
                             <Button label="Contribute" onClick={() => typeof contract.contribution === "number" ? "" : submit(smartContractAddress, entryInput)} disabled={typeof contract.contribution === "number"} />
                             <span className="p-float-label">
-                                <InputNumber id="input" value={typeof contract.contribution === "number" ? contract.contribution : entryInput} onChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={0} maxFractionDigits={18} required={true} min={contract.min} max={contract.max} disabled={typeof contract.contribution === "number"} />
+                            {/* <InputNumber value={entryInput} onValueChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={2}/> */}
+                            {typeof contract.contribution !== "number" ? 
+                                <InputNumber id="input" value={entryInput} onChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={2} 
+                                 min={+contract.min} max={+contract.max} /> :
+                                <InputNumber value={contract.contribution} mode="decimal" locale="de-DE" disabled={true}/>}
                                 <label htmlFor="input">Benchmark Input {contract.unit ? `(in ${contract.unit} )` : ''}</label>
                             </span>
                         </div>
