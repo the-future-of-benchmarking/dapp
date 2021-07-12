@@ -15,7 +15,7 @@ async function main() {
     let sum = [];
 
     // await instance.start("test", 1, 50, "Mio. EUR");
-    await instance.startFromAddress("0xB4a90C95Bf3474041911b9D3f90Eb78F3Dc27Ee9")
+    await instance.startFromAddress("0x7bCa01D700fA13E54E1ce3bd7191fd699c53185B")
 
     let nuAccounts = accounts.map((acc: any) => ({ account: acc, contribution: toPrecision((Math.random() * 48) + 1) }))
     for (let { account, contribution } of nuAccounts) {

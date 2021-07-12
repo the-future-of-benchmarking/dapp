@@ -86,8 +86,6 @@ contract BenchMark {
         uint256 viertel = percentage(25, referenceValue);
         uint256 dreiviertel = percentage(75, referenceValue);
 
-        
-
         if (isBest) {
             if (value == referenceValue) {
                 return 5;

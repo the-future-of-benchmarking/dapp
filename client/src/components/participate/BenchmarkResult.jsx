@@ -8,6 +8,7 @@ import { Synchronization } from "Synchronization";
 import { Message } from 'primereact/message';
 import { Button } from "primereact/button";
 import { DateTime } from "luxon";
+import scale from './scale.jpeg';
 
 
 
@@ -49,15 +50,21 @@ export const BenchmarkResultO = ({
     const bestRating = <><Rating value={ratingValue} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am Durchschnitt)</>
     const averageRating = <><Rating value={bestInClass} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am besten Wert)</>
 
+    const cparticipants = <p>Teilnehmende: {participants}</p>
+
 
     return (
         <Card title="Benchmark Resultate" className="p-mt-2">
             <div className="p-grid">
                     <div className="p-col-5">
-                        <Chart type="doughnut" data={chartData} options={lightOptions} />
+                        {/* <Chart type="doughnut" data={chartData} options={lightOptions} /> */}
+                        <img src={scale} alt="Logo" />
                     </div>
                     <div className="p-col-7">
                         <div className="p-grid p-dir-col">
+                        <div className="p-col">
+                                <Chip template={cparticipants} />
+                            </div>
                             <div className="p-col">
                                 <Chip template={bestRating} />
                             </div>
@@ -118,9 +125,8 @@ export class BenchmarkResult extends Component {
 
     render() {
 
-        return (<Card title="Ergebnisse">
+        return (<Card title="Ergebnisse" subTitle={"Letzte Aktualisierung: "+DateTime.fromISO(this.state.lastRefresh).toLocaleString(DateTime.DATETIME_MED)}>
             {this.state.errorMessage ? <Message severity="error" text={this.state.errorMessage} /> : ""}
-            <p>Letzte Aktualisierung: {DateTime.fromISO(this.state.lastRefresh).toLocaleString(DateTime.DATETIME_MED)}</p>
             <Button label="Ergebnisse laden" onClick={() => this.requestResults()} />
             {this.state.best && this.state.average && this.state.averageRated && !this.state.errorMessage && <BenchmarkResultO average={this.state.average} unit={this.state.unit} participants={this.state.participants} entry={this.state.entry} bestInClass={this.state.best} ratingValue={this.state.averageRated} />}
         </Card>)
