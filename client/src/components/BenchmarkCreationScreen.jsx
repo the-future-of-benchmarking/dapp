@@ -228,4 +228,4 @@ class BenchmarkCreationScreenComponent extends Component {
 
 }
 
-export const BenchmarkCreationScreen = BenchmarkCreationScreenComponent
+export default BenchmarkCreationScreenComponent

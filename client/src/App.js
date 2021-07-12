@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, lazy, Suspense } from "react";
 // @ts-ignore
 import getWeb3 from "./getWeb3";
 
@@ -7,10 +7,9 @@ import { StartScreen } from "components/StartScreen";
 import Menu from "components/Menu";
 import { createBrowserHistory } from 'history';
 import { Route, Router, Switch } from "react-router";
-import { ParticipateScreen } from "components/BenchmarkParticipateScreen";
-import { BenchmarkCreationScreen } from "components/BenchmarkCreationScreen";
 import { Toast } from 'primereact/toast';
 import { BenchmarkClient } from "BenchmarkClient";
+
 
 
 let History = createBrowserHistory();
@@ -105,12 +104,16 @@ class App extends Component {
 
   render() {
     window.web3 = this.state.web3
+    const  ParticipateScreen = lazy(() => import("components/BenchmarkParticipateScreen"));
+    const  BenchmarkCreationScreen = lazy(() => import("components/BenchmarkCreationScreen"));
+    const  ImprintScreen = lazy(() => import("components/ImprintScreen"));
     return (
       <div className="App">
         <Toast ref={this.toast} />
         {!this.state.web3 ? <p>See Error Message(s)</p> :
           <Router history={History}>
             <Menu />
+            <Suspense fallback={<div>Loading component...</div>}>
             <Switch>
               <Route path="/create">
                 <BenchmarkCreationScreen web3={this.state.web3} currentAccount={this.state.currentAccount} client={this.state.client} />
@@ -118,10 +121,15 @@ class App extends Component {
               <Route path="/participate">
                 <ParticipateScreen web3={this.state.web3} accounts={this.state.accounts} currentAccount={this.state.currentAccount} client={this.state.client} />
               </Route>
-              <Route path="/">
+              <Route path="/imprint">
+                <ImprintScreen />
+              </Route>
+              <Route path="/" exact>
                 <StartScreen />
               </Route>
+              
             </Switch>
+            </Suspense>
           </Router>}
       </div>
     );

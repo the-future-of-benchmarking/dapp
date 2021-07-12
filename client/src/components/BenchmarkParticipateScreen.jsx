@@ -7,7 +7,7 @@ import { BenchmarkParticipation } from "./participate/BenchmarkParticipation";
 import { BenchmarkClient } from "BenchmarkClient";
 
 
-export class ParticipateScreenComponent extends Component {
+class ParticipateScreenComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -88,4 +88,4 @@ export class ParticipateScreenComponent extends Component {
     }
 }
 
-export const ParticipateScreen = ParticipateScreenComponent
+export default ParticipateScreenComponent

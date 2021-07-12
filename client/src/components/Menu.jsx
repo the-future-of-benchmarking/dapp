@@ -20,6 +20,9 @@ export class Menu extends Component{
             },
             {
                 label: 'Create Benchmark', icon: 'pi pi-fw pi-cog', command:()=>{ this.navigateToPage('/create') },
+            },
+            {
+                label: 'Imprint', icon: 'pi pi-fw pi-cog', command:()=>{this.navigateToPage('/imprint')}
             }
         ]
         return(<MegaMenu  model={items} className="p-mb-4" />)
