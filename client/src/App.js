@@ -21,7 +21,7 @@ class App extends Component {
 
   constructor(props) {
     super(props);
-    this.state = { storageValue: 0, web3: null, accounts: null, contract: null, currentAccount: null, client:null };
+    this.state = { storageValue: 0, web3: null, accounts: null, contract: null, currentAccount: null, client: null };
 
     this.handleAccountsChanged = this.handleAccountsChanged.bind(this);
     this.handleChainChanged = this.handleChainChanged.bind(this)
@@ -58,7 +58,7 @@ class App extends Component {
       const networkId = await web3.eth.net.getId();
       console.log(networkId)
 
-      this.setState({ web3, accounts, currentAccount: accounts[0], networkId, client:  new BenchmarkClient(web3, accounts[0])})
+      this.setState({ web3, accounts, currentAccount: accounts[0], networkId, client: new BenchmarkClient(web3, accounts[0]) })
 
       ethereum.on('chainChanged', this.handleChainChanged);
       ethereum.on('accountsChanged', this.handleAccountsChanged);
@@ -104,9 +104,10 @@ class App extends Component {
 
   render() {
     window.web3 = this.state.web3
-    const  ParticipateScreen = lazy(() => import("components/BenchmarkParticipateScreen"));
-    const  BenchmarkCreationScreen = lazy(() => import("components/BenchmarkCreationScreen"));
-    const  ImprintScreen = lazy(() => import("components/ImprintScreen"));
+    const ParticipateScreen = lazy(() => import("components/BenchmarkParticipateScreen"));
+    const BenchmarkCreationScreen = lazy(() => import("components/BenchmarkCreationScreen"));
+    const ImprintScreen = lazy(() => import("components/ImprintScreen"));
+    const ArchitectureScreen = lazy(() => import("components/ArchitectureScreen"))
     return (
       <div className="App">
         <Toast ref={this.toast} />
@@ -114,21 +115,24 @@ class App extends Component {
           <Router history={History}>
             <Menu />
             <Suspense fallback={<div>Loading component...</div>}>
-            <Switch>
-              <Route path="/create">
-                <BenchmarkCreationScreen web3={this.state.web3} currentAccount={this.state.currentAccount} client={this.state.client} />
-              </Route>
-              <Route path="/participate">
-                <ParticipateScreen web3={this.state.web3} accounts={this.state.accounts} currentAccount={this.state.currentAccount} client={this.state.client} />
-              </Route>
-              <Route path="/imprint">
-                <ImprintScreen />
-              </Route>
-              <Route path="/" exact>
-                <StartScreen />
-              </Route>
-              
-            </Switch>
+              <Switch>
+                <Route path="/create">
+                  <BenchmarkCreationScreen web3={this.state.web3} currentAccount={this.state.currentAccount} client={this.state.client} />
+                </Route>
+                <Route path="/participate">
+                  <ParticipateScreen web3={this.state.web3} accounts={this.state.accounts} currentAccount={this.state.currentAccount} client={this.state.client} />
+                </Route>
+                <Route path="/imprint">
+                  <ImprintScreen />
+                </Route>
+                <Route path="/architecture">
+                  <ArchitectureScreen />
+                </Route>
+                <Route path="/" exact>
+                  <StartScreen />
+                </Route>
+
+              </Switch>
             </Suspense>
           </Router>}
       </div>
