@@ -26,17 +26,6 @@ The library "reserves" 19 digits of an integer to save the "after-comma part" (s
 Pi for example would be transmitted as 31415926535897932384, the number 2 as 20000000000000000000. 
 This is expected and required to perform mathematical operations.
 
-## Using/Hosting the app (developer mode)
-
-### Dependencies:
-Blockchain/Ethereum:
-- Ganache (Emulates an Ethereum Blockchain and provides 10 Accounts for usage) https://www.trufflesuite.com/ganache
-- Metamask Browser extension (provides underlying primitives for connecting to Ethereum/Ganache either via Infura or locally) https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn?hl=de
-
-Webclient:
-- either Chrome or any Chromium related browser (i.e. Chromium Edge) [it might work on Firefox as well, although not tested]
-- Node.js > v12
-
 ## Further details:
 Please refer to the https://github.com/the-future-of-benchmarking/proof-of-concept/wiki wiki.
 
