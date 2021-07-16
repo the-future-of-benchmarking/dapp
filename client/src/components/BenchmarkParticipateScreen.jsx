@@ -35,7 +35,8 @@ class ParticipateScreenComponent extends Component {
         if (this.validateAddress(address)) {
 
             try {
-                const client = new BenchmarkClient(this.props.web3, address)
+                const [account] = await this.props.web3.eth.getAccounts();
+                const client = new BenchmarkClient(this.props.web3, address, account)
 
                 const element = await client.getDetails()
                 if(element){

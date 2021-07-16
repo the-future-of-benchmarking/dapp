@@ -11,6 +11,7 @@ export const toPrecision = (num) => {
 
 // @ts-ignore
 export const fromPrecision = (numalike, number = true) => {
+    // console.log(numalike)
     let formatted = formatFixed(numalike, 18);
     if(number){
         return +formatted
@@ -19,5 +20,6 @@ export const fromPrecision = (numalike, number = true) => {
     }
     
 }
+
 
 

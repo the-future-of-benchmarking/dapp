@@ -24,7 +24,8 @@ export const BenchmarkParticipation = ({
 
     let submit = async (address, input) => {
         try {
-            const client = new BenchmarkClient(web3, address);
+            const [account] = await web3.eth.getAccounts();
+            const client = new BenchmarkClient(web3, address, account);
             await client.participate(input)
             const details = await client.getDetails()
             await Synchronization.updateItem({...details, contribution: input}) 
@@ -67,7 +68,6 @@ export const BenchmarkParticipation = ({
                         smartContractResult={contract.result} 
                         smartContractUnit={contract.unit} 
                         smartContractEntry={contract.contribution} 
-                        bestInClass={contract.bestInClass} 
                         ratingValue={contract.rating} 
                         web3={web3} /> :
                         ""

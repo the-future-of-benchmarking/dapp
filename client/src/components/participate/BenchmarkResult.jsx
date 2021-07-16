@@ -17,15 +17,13 @@ export const BenchmarkResultO = ({
     unit,
     participants,
     entry,
-    bestInClass,
     ratingValue,
 }) => {
     const caverage = <p>&empty; {average} {unit}</p>
     const ownEntry = <p>Eigener Eintrag (lokal zwischengespeichert): {entry}</p>
     const difference = <p>Differenz: {entry > (average) ? "+" : "-"} {Math.abs(average - entry)}</p>
 
-    const bestRating = <><Rating value={ratingValue} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am Durchschnitt)</>
-    const averageRating = <><Rating value={bestInClass} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am besten Wert)</>
+    const averageRating = <><Rating value={ratingValue} readOnly cancel={false} stars={5} />&nbsp;(Gemessen am Durchschnitt)</>
 
     const cparticipants = <p>Teilnehmende: {participants}</p>
 
@@ -43,14 +41,11 @@ export const BenchmarkResultO = ({
                                 <Chip template={cparticipants} />
                             </div>
                             <div className="p-col">
-                                <Chip template={bestRating} />
-                            </div>
-                            <div className="p-col">
                                 <Chip template={averageRating} />
                             </div>
                             <div className="p-col"><Chip template={caverage}></Chip> </div>
                             <div className="p-col"><Chip template={ownEntry}></Chip> </div>
-                            <div className="p-col"><Chip style={{ backgroundColor: entry > (average / participants) ? "#4caf50" : "#F57C00", color: "#ffffff" }} template={difference}></Chip> </div>
+                            <div className="p-col"><Chip style={{ backgroundColor: entry > average ? "#4caf50" : "#F57C00", color: "#ffffff" }} template={difference}></Chip> </div>
 
                         </div>
                     </div>
@@ -96,12 +91,15 @@ export class BenchmarkResult extends Component {
             const item = await Synchronization.getItem(this.props.smartContractAddress)
             console.log("Detz", details, item)
 
-            const { best, average, averageRated } = await this.client.getResults(item.contribution);
+            const { average, averageRated } = await this.client.getResults(item.contribution);
 
             const {actualized, unit, contribution} = await Synchronization.getItem(this.props.smartContractAddress)
 
-            this.setState({ best, average, averageRated, lastRefresh: actualized, errorMessage: "", unit, participants: details.entries, entry:contribution })
-            await Synchronization.updateItem({ best, average, averageRated, ...details })
+            console.log({ average, averageRated }, {actualized, unit, contribution})
+
+            this.setState({ average, averageRated, lastRefresh: actualized, errorMessage: "", unit, participants: details.entries, entry:contribution })
+            console.log({ average, averageRated, lastRefresh: actualized, errorMessage: "", unit, participants: details.entries, entry:contribution })
+            await Synchronization.updateItem({ average, averageRated, ...details })
         } catch (e) {
             const msg = BenchmarkClient.decodeErrorMessage(e)
             console.error(msg)
@@ -124,7 +122,7 @@ export class BenchmarkResult extends Component {
             <Toast ref={this.toast} />
             {this.state.errorMessage ? <Message severity="error" text={this.state.errorMessage} className="p-mb-3"/> : ""}
             <Button label="Ergebnisse laden" onClick={() => this.requestResults()} />
-            {this.state.best && this.state.average && this.state.averageRated && !this.state.errorMessage && <BenchmarkResultO average={this.state.average} unit={this.state.unit} participants={this.state.participants} entry={this.state.entry} bestInClass={this.state.best} ratingValue={this.state.averageRated} />}
+            {this.state.average && this.state.averageRated && !this.state.errorMessage && <BenchmarkResultO average={this.state.average} unit={this.state.unit} participants={this.state.participants} entry={this.state.entry} ratingValue={this.state.averageRated} />}
         </Card>)
         /*
         if(this.state.errorMessage){

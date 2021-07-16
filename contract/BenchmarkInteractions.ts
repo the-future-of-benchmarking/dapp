@@ -1,75 +1,236 @@
-import { fromPrecision, toPrecision } from "./numberUtil"
-const Web3 = require('web3');
-const benchmarkContract = require('./build/contracts/BenchMark.json');
-export class BenchmarkInteractions {
+import { fromPrecision, toPrecision } from "./numberUtil";
+// @ts-ignore
+import benchmarkContract from "./build/contracts/BenchMark.json";
+import Web3 from "web3";
+import { Synchronization } from "./Synchronization";
+import * as paillierBigint from "paillier-bigint"
+import * as bigintConversion from "bigint-conversion"
+
+class BlockChainInteractor {
     web3;
-    account;
-    BenchMarkInstance: any;
-    constructor(account: string, provider: any) {
-        this.web3 = new Web3(provider);
-        this.account = account;
+    constructor(web3: any) {
+        this.web3 = web3;
     }
-
-    private async executewithGas(method: any, from: any, call = true) {
-        let gasestimate = await method.estimateGas({ from })
+    async executewithGas(method: any, from: any, call = true) {
+        let gasestimate = await method.estimateGas({ from });
         let gasprice = await this.web3.eth.getGasPrice();
-        let round = (a: any) => a.toFixed(0)
+        let round = (a: any) => a.toFixed(0);
         if (!call) {
-            return await method.send({ from, gas: round(gasestimate * 1.5), gasPrice: round(gasprice * 1.105) })
+            let send = await method.send({ from, gas: round(gasestimate * 1.5), gasPrice: round(+gasprice * 1.105) });
+            return send;
         }
-        return await method.call({ from, gas: round(gasestimate * 1.5), gasPrice: round(gasprice * 1.1) })
+        return await method.call({ from, gas: round(gasestimate * 1.5), gasPrice: round(+gasprice * 1.1) });
     }
 
-    async getDetails(account: any) {
-        const result = await this.executewithGas(this.BenchMarkInstance.methods.benchmark(), account);
-        let response = { name: null, entries: null, sum: null, upper_bound: null, lower_bound: null, unit: null }
-        response.name = this.web3.utils.hexToUtf8(result.name)
-        //@ts-ignore
-        response.entries = +result.entries.toString()
-        //@ts-ignore
-        response.sum = fromPrecision(result.sum)
-        //@ts-ignore
-        response.upper_bound = fromPrecision(result.upper_bound.toString())
-        //@ts-ignore
-        response.lower_bound = fromPrecision(result.lower_bound.toString())
-        response.unit = this.web3.utils.hexToUtf8(result.unit)
-
-        return response;
+    toWeirdString(str: string) {
+        return Web3.utils.padLeft(Web3.utils.toHex(str), 64)
     }
 
-    private async provision(benchmarkName: any, lowerBound: any, upperBound: any, benchmarkUnit: any, account: any) {
-        const BenchMark = new this.web3.eth.Contract(benchmarkContract.abi)
+    async getAccounts() {
+        let [account] = await this.web3.eth.getAccounts();
+        return account;
+    }
+}
+
+export class BenchmarkFactory extends BlockChainInteractor {
+    async provision(benchmarkName: any, lowerBound: any, upperBound: any, benchmarkUnit: any, desc: any, account?: any) {
+        if (!benchmarkName || typeof lowerBound == "undefined" || typeof upperBound == "undefined" || !benchmarkUnit || !desc) {
+            throw new Error("Required parameters missing")
+        }
+
+        const { publicKey, privateKey } = await paillierBigint.generateRandomKeys(128)
+        let pub = { n: "", g: "", nSquared: "", zero: "" };
+        let priv = { lambda: "", mu: "" }
+        pub.n = '0x' + bigintConversion.bigintToHex(publicKey.n)
+        pub.g = '0x' + bigintConversion.bigintToHex(publicKey.g)
+        pub.nSquared = '0x' + bigintConversion.bigintToHex(publicKey.n ** 2n)
+        pub.zero = '0x' + bigintConversion.bigintToHex(publicKey.encrypt(0n))
+
+        priv.lambda = '0x' + bigintConversion.bigintToHex(privateKey.lambda)
+        priv.mu = '0x' + bigintConversion.bigintToHex(privateKey.mu)
+
+        const BenchMark = new this.web3.eth.Contract(benchmarkContract.abi);
         let deployerFn = await BenchMark.deploy({
             data: benchmarkContract.bytecode,
-            arguments: [this.web3.utils.toHex(benchmarkName), this.web3.utils.toHex(lowerBound), this.web3.utils.toHex(upperBound), this.web3.utils.toHex(benchmarkUnit)],
-        })
+            arguments: [this.toWeirdString(benchmarkName), this.web3.utils.toHex(toPrecision(lowerBound)), this.web3.utils.toHex(toPrecision(upperBound)), this.toWeirdString(benchmarkUnit), this.toWeirdString(desc),
+            pub.n, pub.g, pub.nSquared, priv.lambda, priv.mu, pub.zero ],
+        });
+        if(!account){
+            account = await this.getAccounts();
+            let returnValue = await this.executewithGas(deployerFn, account, false);
+            return new BenchmarkClient(this.web3, returnValue._address, account); 
+        }else{
+            let returnValue = await this.executewithGas(deployerFn, account, false);
+            return new BenchmarkClient(this.web3, returnValue._address, account); 
+        }
+        
+    }
+}
 
-        return await this.executewithGas(deployerFn, account, false)
+export class BenchmarkClient extends BlockChainInteractor {
+    BenchMarkInstance;
+    address = null;
+    account = null;
+    constructor(provider: any, address: any, account: any) {
+        super(provider);
+        this.BenchMarkInstance = new this.web3.eth.Contract(benchmarkContract.abi, address);
+        this.address = address
+        this.account = account;
+    }
+    async getDetails(force = false, contribution?) {
+        const storageItem = await Synchronization.getItem(this.address)
+
+
+        if (!storageItem || storageItem.refresh || force) {
+            
+            const result = await this.executewithGas(this.BenchMarkInstance.methods.benchmark(), this.account);
+            let response = { name: null, description: null, entries: null, average:null, averageRated: null, upper_bound: null, lower_bound: null, unit: null, address: null, n: null, g: null };
+            response.name = this.web3.utils.hexToUtf8(result.name);
+            response.description = this.web3.utils.hexToUtf8(result.description)
+
+
+            //@ts-ignore
+            response.entries = +result.entries.toString();
+
+            // @ts-ignore
+            response.n = BigInt(result.n);
+            // @ts-ignore
+            response.g = BigInt(result.g);
+
+            const lambda = BigInt(result.lambda);
+            const mu = BigInt(result.mu);
+            const n = BigInt(result.n);
+            const g = BigInt(result.g);
+            const k = new paillierBigint.PrivateKey(lambda, mu, new paillierBigint.PublicKey(n, g))
+
+            // @ts-ignore
+            response.average = +fromPrecision(k.decrypt(BigInt(result.sum))) / response.entries;
+
+            
+            if(contribution){
+                // @ts-ignore
+                response.averageRated = BenchmarkClient.getAverageRating(contribution, response.average)
+            }
+
+            
+
+            //@ts-ignore
+            response.upper_bound = fromPrecision(result.upper_bound.toString());
+            //@ts-ignore
+            response.lower_bound = fromPrecision(result.lower_bound.toString());
+            response.unit = this.web3.utils.hexToUtf8(result.unit);
+            response.address = this.BenchMarkInstance._address;
+            
+
+            if ((storageItem && storageItem.refresh === true) || force) {
+                await Synchronization.updateItem(response)
+            } else {
+                await Synchronization.addItem(response)
+            }
+
+
+            return response;
+        } else {
+            return storageItem;
+        }
+
+    }
+
+    getEmitter() {
+        return this.BenchMarkInstance.events.AggregateReady()
+    }
+
+    async getEnc(value: any){
+        let {n,g} = await Synchronization.getItem(this.address);
+
+        if(!n || !g){
+            let details = await this.getDetails(true);
+            n = details.n;
+            g = details.g;
+        }
+
+        const precisionValue = toPrecision(value);
+        const pubKey = new paillierBigint.PublicKey(BigInt(n), BigInt(g))
+        let returnValue = '0x'+bigintConversion.bigintToHex(pubKey.encrypt(BigInt(precisionValue)))
+        
+        return returnValue;
     }
 
     async participate(value: any) {
-        return await this.executewithGas(this.BenchMarkInstance.methods.participate(this.web3.utils.toHex(value)), this.account, false)
+        const encryptedValue = await this.getEnc(value)
+        // console.log(encryptedValue)
+
+        const response = await this.executewithGas(this.BenchMarkInstance.methods.participate(encryptedValue), this.account, false);
+        await Synchronization.updateItem({ contribution: value, address: this.address })
+        return response;
     }
 
-    async start(name?: string, lowerBound?: number, upperBound?: number, unit?: string) {
+    async getResults(contribution: any) {
+        /*const internalContribution = toPrecision(contribution)
+        const encryptedValue = await this.getEnc(internalContribution)
 
-        this.BenchMarkInstance = await this.provision(name, lowerBound, upperBound, unit, this.account);
-        console.log(this.BenchMarkInstance._address)
-
-    }
-
-    async startFromAddress(address: string) {
-
-        this.BenchMarkInstance = new this.web3.eth.Contract(benchmarkContract.abi, address)
-
-    }
-
-    async getResults(contribution: number) {
-        let best = await this.executewithGas(this.BenchMarkInstance.methods.bestRating(contribution), this.account);
+        let best = await this.executewithGas(this.BenchMarkInstance.methods.bestRating(encryptedValue), this.account);
         let average = await this.executewithGas(this.BenchMarkInstance.methods.average(), this.account);
-        let averageRated = await this.executewithGas(this.BenchMarkInstance.methods.averageRating(contribution), this.account);
+        let averageRated = await this.executewithGas(this.BenchMarkInstance.methods.averageRating(encryptedValue), this.account);
+        return { best: parseInt(best), average: fromPrecision(average), averageRated: parseInt(averageRated) };*/
+        const {average, averageRated} = await this.getDetails(true, contribution);
+        return {average, averageRated}
 
-        return { best, average: fromPrecision(average), averageRated }
     }
 
+    static decodeErrorMessage(e) {
+        if (e.message.includes("Internal JSON-RPC")) {
+
+            if (e.message.includes("VM Exception while processing transaction: revert")) {
+                let a = e.message.replace("VM Exception while processing transaction: revert", "Smart Contract Fehler:")
+                let msg = JSON.parse(a.substring(25)).message
+                return msg;
+            } else {
+                let msg = JSON.parse(e.message.substring(25)).message
+                return msg;
+            }
+
+        } else {
+            return e.message;
+        }
+    }
+
+    static percentage(percent, total) {
+        return ((percent/ 100) * total)
+    }
+
+    static getAverageRating(value, referenceValue){
+            const halb = BenchmarkClient.percentage(50, referenceValue);
+            const viertel = BenchmarkClient.percentage(25, referenceValue);
+            const dreiviertel = BenchmarkClient.percentage(75, referenceValue)
+            const minushalb = BenchmarkClient.percentage(1, referenceValue);
+            const plusviertel = BenchmarkClient.percentage(125, referenceValue);
+            const plushalb = BenchmarkClient.percentage(150, referenceValue);
+            const plusdreiviertel = BenchmarkClient.percentage(175, referenceValue);
+            const plushundert = BenchmarkClient.percentage(200, referenceValue);
+
+            if (value == referenceValue) {
+                return 5;
+            } else if (value < referenceValue && value > dreiviertel) {
+                return 5;
+            } else if (value < dreiviertel && value > halb) {
+                return 4;
+            } else if (value < halb && value > viertel) {
+                return 3;
+            } else if (value < viertel && value > minushalb) {
+                return 2;
+            } else if (value < minushalb) {
+                return 1;
+            } else if (value > referenceValue && value < plusviertel) {
+                return 5;
+            } else if (value > plusviertel && value < plushalb) {
+                return 4;
+            } else if (value > plushalb && value < plusdreiviertel) {
+                return 3;
+            } else if (value > plusdreiviertel && value < plushundert) {
+                return 2;
+            } else {
+                return 1;
+            }
+    }
 }
