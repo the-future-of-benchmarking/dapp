@@ -94,7 +94,6 @@ export class BenchmarkResult extends Component {
         try {
             const details = await this.client.getDetails(true)
             const item = await Synchronization.getItem(this.props.smartContractAddress)
-            console.log("Detz", details, item)
 
             const { best, average, averageRated } = await this.client.getResults(item.contribution);
 

@@ -116,19 +116,19 @@ class App extends Component {
             <Menu />
             <Suspense fallback={<div>Loading component...</div>}>
               <Switch>
-                <Route path="/create">
+                <Route path={`${process.env.PUBLIC_URL}/create`}>
                   <BenchmarkCreationScreen web3={this.state.web3} currentAccount={this.state.currentAccount} client={this.state.client} />
                 </Route>
-                <Route path="/participate">
+                <Route path={`${process.env.PUBLIC_URL}/participate`}>
                   <ParticipateScreen web3={this.state.web3} accounts={this.state.accounts} currentAccount={this.state.currentAccount} client={this.state.client} />
                 </Route>
-                <Route path="/imprint">
+                <Route path={`${process.env.PUBLIC_URL}/imprint`}>
                   <ImprintScreen />
                 </Route>
-                <Route path="/architecture">
+                <Route path={`${process.env.PUBLIC_URL}/architecture`}>
                   <ArchitectureScreen />
                 </Route>
-                <Route path="/" exact>
+                <Route path={`${process.env.PUBLIC_URL}/`} exact>
                   <StartScreen />
                 </Route>
 

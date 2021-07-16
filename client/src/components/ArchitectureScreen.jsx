@@ -10,17 +10,14 @@ export default function ArchitectureScreen(props) {
                         <h1>Architektur</h1>
                     </div>
                     <div className="p-col">
-                        <img src={architecture} style={{ height: "200px" }} alt="Sebi Avatar" />
+                        <img src={architecture} style={{ height: "200px" }} alt="Architektur" />
                     </div>
                     <div className="p-col">
                         <p>Im vorhergehenden Bild wird die Architektur dieser DApp dargestellt.</p>
                         <p>Die vorliegende React Webapplikation synchronisiert sich mit der Browsereigenen IndexedDB, welche Daten persistent abspeichert.</p>
                         <p>Synchronisiert wird diese Datenbank bei Nutzerinteraktion via der Metamask Erweiterung mit dem Smart Contract.</p>
-                        <h3>Transaktionstypen</h3>
                     </div>
-                    <div className="p-col">
-                        <h3>Transaktionstypen</h3>
-                    </div>
+                    
                 </div>
             </div>
         </div>

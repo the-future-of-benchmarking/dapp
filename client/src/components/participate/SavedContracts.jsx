@@ -32,7 +32,10 @@ class AddContractComponent extends Component {
                     await Synchronization.addItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address: inputAddress })
                     this.setState({ contractInput: "" })
                 } else {
+                    const { name, description, entries, sum, upper_bound, lower_bound, unit } = await client.getDetails()
+                    await Synchronization.updateItem({ name, description, entries, sum, upper_bound, lower_bound, unit, address: inputAddress })
                     this.setState({ contractInput: "" })
+                    window.location.reload()
                 }
 
             } catch (e) {
@@ -75,7 +78,6 @@ export const SavedContracts = ({ loadBenchmark, smartContractAddress, web3, show
 
     useEffect(() => {
         Synchronization.getAll().then(el => {
-            console.log("a", el)
             setContracts(el)})
     }, []);
 

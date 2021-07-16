@@ -81,7 +81,6 @@ class BenchmarkCreationScreenComponent extends Component {
 
 
     async onSubmit(data, form) {
-        console.log(data)
         try {
             const factory = new BenchmarkFactory(this.props.web3)
             const client = await factory.provision(data.name, data.lowerBound, data.upperBound, data.unit, data.description)
