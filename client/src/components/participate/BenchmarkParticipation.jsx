@@ -37,7 +37,6 @@ export const BenchmarkParticipation = ({
         }
 
     }
-    console.log(contract)
 
     if (!contract) {
         return (<p>Loading...</p>)
@@ -53,7 +52,7 @@ export const BenchmarkParticipation = ({
                             {/* <InputNumber value={entryInput} onValueChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={2}/> */}
                             {typeof contract.contribution !== "number" ? 
                                 <InputNumber id="input" value={entryInput} onChange={(e) => setEntryInput(e.value)} mode="decimal" locale="de-DE" minFractionDigits={2} 
-                                 min={+contract.min} max={+contract.max} /> :
+                                 min={+contract.lower_bound} max={+contract.upper_bound} /> :
                                 <InputNumber value={contract.contribution} mode="decimal" locale="de-DE" disabled={true}/>}
                                 <label htmlFor="input">Benchmark Input {contract.unit ? `(in ${contract.unit} )` : ''}</label>
                             </span>

@@ -24,7 +24,6 @@ export class Synchronization {
         const keys = await localforage.keys()
         const entries = Array.from(new Set(keys.map(e => e.split('|')[0])))
         const returnValues = entries.map(Synchronization.getItem)
-        console.log(returnValues, keys)
         let all =  await Promise.all(returnValues)
         return all;
     }
@@ -48,7 +47,6 @@ export class Synchronization {
 
     static async addItem(data, contribution) {
         await localforage.ready();
-        console.log(data, contribution)
 
         if (!await Synchronization.getItem(data.address)) {
             for (let i = 0; i < attributes.length; i++) {
